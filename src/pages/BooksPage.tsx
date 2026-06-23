@@ -1,4 +1,4 @@
-﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Share2, Copy, Check } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿﻿import { useState, useEffect } from 'react';
 import { X, Users, User } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
 import { GitHubConfig, Book, Record as BookRecord } from '@/types';

@@ -1,4 +1,4 @@
-﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿import { useState, useEffect } from 'react';
 import { Github, Eye, EyeOff, ArrowRight, Info, ExternalLink } from 'lucide-react';
 import { GitHubConfig } from '@/types';
 import { setGitHubConfig, getGitHubConfig, testConnection, getDeviceName, setDeviceName } from '@/utils/github';

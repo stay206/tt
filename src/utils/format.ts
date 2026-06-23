@@ -1,4 +1,4 @@
-﻿﻿export const formatCurrency = (amount: number): string => {
+﻿﻿﻿export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('zh-CN', {
     style: 'currency',
     currency: 'CNY',
