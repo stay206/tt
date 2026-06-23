@@ -263,7 +263,7 @@ const CreateBookModal = ({ config, onClose, onSuccess }: { config: GitHubConfig;
     setSubmitting(true);
     setError('');
 
-    const id = name.trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5-]/g, '-') + '-' + Date.now().toString(36);
+    const id = 'book-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 8);
     const book: Book = {
       id,
       name: name.trim(),
