@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+ï»¿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, Filler } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
@@ -34,7 +34,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
         setBook(b);
         localStorage.setItem(`current_book_cache_${bookId}`, JSON.stringify(b));
       } else {
-        // ³¢ÊÔ»º´æ
+        // å°è¯•ç¼“å­˜
         const cached = localStorage.getItem(`current_book_cache_${bookId}`);
         if (cached) setBook(JSON.parse(cached));
       }
@@ -61,7 +61,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-500 mt-4">¼ÓÔØÖĞ...</p>
+          <p className="text-gray-500 mt-4">åŠ è½½ä¸­...</p>
         </div>
       </div>
     );
@@ -72,7 +72,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
     date.setMonth(date.getMonth() - i);
     return {
       key: getMonthKey(date.toISOString()),
-      label: `${date.getMonth() + 1}ÔÂ`,
+      label: `${date.getMonth() + 1}æœˆ`,
     };
   }).reverse();
 
@@ -112,7 +112,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
   const memberChartData = {
     labels: Object.keys(expenseByMember),
     datasets: [{
-      label: 'Ö§³ö',
+      label: 'æ”¯å‡º',
       data: Object.values(expenseByMember),
       backgroundColor: ['#0ea5e9', '#f97316', '#8b5cf6', '#10b981', '#f43f5e', '#eab308'],
       borderWidth: 0,
@@ -124,7 +124,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
     labels: months.map((m) => m.label),
     datasets: [
       {
-        label: 'ÊÕÈë',
+        label: 'æ”¶å…¥',
         data: months.map((m) =>
           book.records
             .filter((r) => r.type === 'income' && getMonthKey(r.date) === m.key)
@@ -138,7 +138,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
         pointHoverRadius: 6,
       },
       {
-        label: 'Ö§³ö',
+        label: 'æ”¯å‡º',
         data: months.map((m) =>
           book.records
             .filter((r) => r.type === 'expense' && getMonthKey(r.date) === m.key)
@@ -166,7 +166,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-lg font-bold text-gray-800">Í³¼Æ·ÖÎö</h1>
+              <h1 className="text-lg font-bold text-gray-800">ç»Ÿè®¡åˆ†æ</h1>
               <p className="text-xs text-gray-500">{book.name}</p>
             </div>
           </div>
@@ -197,9 +197,9 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Ö§³ö·ÖÀà</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">æ”¯å‡ºåˆ†ç±»</h3>
             {Object.keys(expenseByCategory).length === 0 ? (
-              <div className="text-center py-10 text-gray-400">ÔİÎŞÖ§³öÊı¾İ</div>
+              <div className="text-center py-10 text-gray-400">æš‚æ— æ”¯å‡ºæ•°æ®</div>
             ) : (
               <div className="h-72">
                 <Pie data={pieChartData} options={{
@@ -217,9 +217,9 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">³ÉÔ±Ö§³öÅÅĞĞ</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">æˆå‘˜æ”¯å‡ºæ’è¡Œ</h3>
             {Object.keys(expenseByMember).length === 0 ? (
-              <div className="text-center py-10 text-gray-400">ÔİÎŞÊı¾İ</div>
+              <div className="text-center py-10 text-gray-400">æš‚æ— æ•°æ®</div>
             ) : (
               <div className="h-72">
                 <Bar data={memberChartData} options={{
@@ -238,7 +238,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">ÔÂ¶ÈÇ÷ÊÆ</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">æœˆåº¦è¶‹åŠ¿</h3>
           <div className="h-72">
             <Line data={trendData} options={{
               responsive: true,
@@ -255,12 +255,12 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">·ÖÀàÏêÇé</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">åˆ†ç±»è¯¦æƒ…</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 className="text-sm font-medium text-rose-500 mb-3">Ö§³öÃ÷Ï¸</h4>
+              <h4 className="text-sm font-medium text-rose-500 mb-3">æ”¯å‡ºæ˜ç»†</h4>
               {Object.entries(expenseByCategory).length === 0 ? (
-                <p className="text-gray-400 text-sm">ÔİÎŞÖ§³ö</p>
+                <p className="text-gray-400 text-sm">æš‚æ— æ”¯å‡º</p>
               ) : (
                 <div className="space-y-2">
                   {Object.entries(expenseByCategory)
@@ -278,9 +278,9 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
               )}
             </div>
             <div>
-              <h4 className="text-sm font-medium text-emerald-500 mb-3">ÊÕÈëÃ÷Ï¸</h4>
+              <h4 className="text-sm font-medium text-emerald-500 mb-3">æ”¶å…¥æ˜ç»†</h4>
               {Object.entries(incomeByCategory).length === 0 ? (
-                <p className="text-gray-400 text-sm">ÔİÎŞÊÕÈë</p>
+                <p className="text-gray-400 text-sm">æš‚æ— æ”¶å…¥</p>
               ) : (
                 <div className="space-y-2">
                   {Object.entries(incomeByCategory)

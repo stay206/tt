@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+ï»¿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3 } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -37,16 +37,16 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         setBook(b);
         localStorage.setItem(`current_book_cache_${bookId}`, JSON.stringify(b));
       } else {
-        setError('ÕË±¾²»´æÔÚ');
+        setError('è´¦æœ¬ä¸å­˜åœ¨');
       }
     } catch (e: any) {
-      // ³¢ÊÔÓÃ»º´æ
+      // å°è¯•ç”¨ç¼“å­˜
       const cached = localStorage.getItem(`current_book_cache_${bookId}`);
       if (cached) {
         setBook(JSON.parse(cached));
-        setError('ÍøÂç´íÎó£¬ÒÑÏÔÊ¾»º´æÊý¾Ý');
+        setError('ç½‘ç»œé”™è¯¯ï¼Œå·²æ˜¾ç¤ºç¼“å­˜æ•°æ®');
       } else {
-        setError(e.message || '¼ÓÔØÊ§°Ü');
+        setError(e.message || 'åŠ è½½å¤±è´¥');
       }
     }
     setLoading(false);
@@ -66,7 +66,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const handleDelete = async (id: string) => {
     if (!book) return;
     if (book.records.find(r => r.id === id)?.createdBy !== deviceName) {
-      setError('Ö»ÄÜÉ¾³ý×Ô¼º´´½¨µÄ¼ÇÂ¼');
+      setError('åªèƒ½åˆ é™¤è‡ªå·±åˆ›å»ºçš„è®°å½•');
       return;
     }
 
@@ -74,7 +74,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     if (result.success) {
       await loadBook();
     } else {
-      setError(result.message || 'É¾³ýÊ§°Ü');
+      setError(result.message || 'åˆ é™¤å¤±è´¥');
     }
   };
 
@@ -83,7 +83,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-500 mt-4">¼ÓÔØÖÐ...</p>
+          <p className="text-gray-500 mt-4">åŠ è½½ä¸­...</p>
         </div>
       </div>
     );
@@ -93,12 +93,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">{error || 'ÕË±¾²»´æÔÚ'}</p>
+          <p className="text-gray-500 mb-4">{error || 'è´¦æœ¬ä¸å­˜åœ¨'}</p>
           <button
             onClick={() => navigate('/')}
             className="px-4 py-2 bg-primary-500 text-white rounded-xl"
           >
-            ·µ»ØÕË±¾ÁÐ±í
+            è¿”å›žè´¦æœ¬åˆ—è¡¨
           </button>
         </div>
       </div>
@@ -127,7 +127,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     date.setMonth(date.getMonth() - i);
     return {
       key: getMonthKey(date.toISOString()),
-      label: `${date.getFullYear()}Äê${date.getMonth() + 1}ÔÂ`,
+      label: `${date.getFullYear()}å¹´${date.getMonth() + 1}æœˆ`,
     };
   });
 
@@ -148,7 +148,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                     <h1 className="text-lg font-bold text-gray-800">{book.name}</h1>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Cloud className="w-3 h-3" />
-                      <span>ÔÆ¶ËÍ¬²½</span>
+                      <span>äº‘ç«¯åŒæ­¥</span>
                     </div>
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
             <button
               onClick={() => navigate(`/statistics/${bookId}`)}
               className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl"
-              title="Í³¼Æ·ÖÎö"
+              title="ç»Ÿè®¡åˆ†æž"
             >
               <BarChart3 className="w-5 h-5" />
             </button>
@@ -165,7 +165,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               onClick={handleRefresh}
               disabled={syncing}
               className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl"
-              title="Ë¢ÐÂ"
+              title="åˆ·æ–°"
             >
               <RefreshCw className={`w-5 h-5 ${syncing ? 'animate-spin' : ''}`} />
             </button>
@@ -182,15 +182,15 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">±¾ÔÂ¸ÅÀÀ</h2>
-            <p className="text-gray-500 mt-1">{book.description || '²é¿´±¾ÔÂÊÕÖ§'}</p>
+            <h2 className="text-2xl font-bold text-gray-800">æœ¬æœˆæ¦‚è§ˆ</h2>
+            <p className="text-gray-500 mt-1">{book.description || 'æŸ¥çœ‹æœ¬æœˆæ”¶æ”¯'}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="ËÑË÷..."
+                placeholder="æœç´¢..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -214,18 +214,18 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <StatCard type="income" value={monthlyIncome} label="±¾ÔÂÊÕÈë" />
-          <StatCard type="expense" value={monthlyExpense} label="±¾ÔÂÖ§³ö" />
-          <StatCard type="balance" value={monthlyIncome - monthlyExpense} label="±¾ÔÂ½áÓà" />
+          <StatCard type="income" value={monthlyIncome} label="æœ¬æœˆæ”¶å…¥" />
+          <StatCard type="expense" value={monthlyExpense} label="æœ¬æœˆæ”¯å‡º" />
+          <StatCard type="balance" value={monthlyIncome - monthlyExpense} label="æœ¬æœˆç»“ä½™" />
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">ÊÕÖ§¼ÇÂ¼</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">æ”¶æ”¯è®°å½•</h3>
           {filteredRecords.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl">
               <div className="text-6xl mb-4">?</div>
-              <p className="text-gray-500">ÔÝÎÞ¼ÇÂ¼</p>
-              <p className="text-gray-400 text-sm mt-1">µã»÷ÓÒÏÂ½Ç°´Å¥Ìí¼ÓµÚÒ»Ìõ¼ÇÂ¼</p>
+              <p className="text-gray-500">æš‚æ— è®°å½•</p>
+              <p className="text-gray-400 text-sm mt-1">ç‚¹å‡»å³ä¸‹è§’æŒ‰é’®æ·»åŠ ç¬¬ä¸€æ¡è®°å½•</p>
             </div>
           ) : (
             <div className="space-y-3">

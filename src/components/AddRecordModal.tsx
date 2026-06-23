@@ -1,4 +1,4 @@
-import { useState } from 'react';
+ï»¿import { useState } from 'react';
 import { X } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
 import { GitHubConfig } from '@/types';
@@ -51,7 +51,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
       onClose();
       onAdd();
     } else {
-      setError(result.message || '±£´æÊ§°Ü');
+      setError(result.message || 'ä¿å­˜å¤±è´¥');
     }
   };
 
@@ -61,7 +61,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white">
-          <h2 className="text-xl font-bold text-gray-800">Ìí¼Ó¼ÇÂ¼</h2>
+          <h2 className="text-xl font-bold text-gray-800">æ·»åŠ è®°å½•</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
@@ -85,7 +85,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
                 type === 'expense' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-500'
               }`}
             >
-              Ö§³ö
+              æ”¯å‡º
             </button>
             <button
               type="button"
@@ -94,12 +94,12 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
                 type === 'income' ? 'bg-white text-emerald-500 shadow-sm' : 'text-gray-500'
               }`}
             >
-              ÊÕÈë
+              æ”¶å…¥
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">½ğ¶î</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">é‡‘é¢</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">?</span>
               <input
@@ -115,7 +115,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">·ÖÀà</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">åˆ†ç±»</label>
             <div className="grid grid-cols-4 gap-2">
               {categories.map((cat) => (
                 <button
@@ -136,7 +136,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">ÈÕÆÚ</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">æ—¥æœŸ</label>
             <input
               type="date"
               value={date}
@@ -146,12 +146,12 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">±¸×¢</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">å¤‡æ³¨</label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ìí¼Ó±¸×¢..."
+              placeholder="æ·»åŠ å¤‡æ³¨..."
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -165,7 +165,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {submitting ? '±£´æÖĞ...' : '±£´æ'}
+            {submitting ? 'ä¿å­˜ä¸­...' : 'ä¿å­˜'}
           </button>
         </form>
       </div>

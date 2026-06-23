@@ -1,4 +1,4 @@
-import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+ï»¿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
@@ -24,9 +24,9 @@ export const setGitHubConfig = (config: GitHubConfig | null): void => {
 export const getDeviceName = (): string => {
   let name = localStorage.getItem(DEVICE_NAME_KEY);
   if (!name) {
-    // ×Ô¶¯Éú³ÉÉè±¸Ãû
+    // è‡ªåŠ¨ç”Ÿæˆè®¾å¤‡å
     const random = Math.random().toString(36).substring(2, 6);
-    name = `ÓÃ»§${random}`;
+    name = `ç”¨æˆ·${random}`;
     localStorage.setItem(DEVICE_NAME_KEY, name);
   }
   return name;
@@ -49,25 +49,25 @@ const getHeaders = (token?: string) => {
 
 export const testConnection = async (config: GitHubConfig): Promise<{ success: boolean; message?: string; isPublic?: boolean }> => {
   try {
-    // ³¢ÊÔ¶ÁÈ¡²Ö¿âĞÅÏ¢
+    // å°è¯•è¯»å–ä»“åº“ä¿¡æ¯
     const response = await fetch(`${GITHUB_API}/repos/${config.owner}/${config.repo}`, {
       headers: getHeaders(config.token),
     });
 
     if (!response.ok) {
       if (response.status === 404) {
-        return { success: false, message: '²Ö¿â²»´æÔÚ»òÎŞÈ¨·ÃÎÊ' };
+        return { success: false, message: 'ä»“åº“ä¸å­˜åœ¨æˆ–æ— æƒè®¿é—®' };
       }
       if (response.status === 401) {
-        return { success: false, message: 'Token ÎŞĞ§' };
+        return { success: false, message: 'Token æ— æ•ˆ' };
       }
-      return { success: false, message: `·ÃÎÊÊ§°Ü: ${response.status}` };
+      return { success: false, message: `è®¿é—®å¤±è´¥: ${response.status}` };
     }
 
     const data = await response.json();
     return { success: true, isPublic: !data.private };
   } catch (e) {
-    return { success: false, message: 'ÍøÂç´íÎó' };
+    return { success: false, message: 'ç½‘ç»œé”™è¯¯' };
   }
 };
 
@@ -89,7 +89,7 @@ const getFile = async (config: GitHubConfig, path: string): Promise<{ content: s
     return null;
   }
   if (!response.ok) {
-    throw new Error(`¶ÁÈ¡Ê§°Ü: ${response.status}`);
+    throw new Error(`è¯»å–å¤±è´¥: ${response.status}`);
   }
 
   const data: RepoFileResponse = await response.json();
@@ -125,12 +125,12 @@ const putFile = async (
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    return { success: false, message: err.message || `±£´æÊ§°Ü: ${response.status}` };
+    return { success: false, message: err.message || `ä¿å­˜å¤±è´¥: ${response.status}` };
   }
   return { success: true };
 };
 
-// ¶ÁÈ¡ÕË±¾Ë÷Òı
+// è¯»å–è´¦æœ¬ç´¢å¼•
 export const getBookIndex = async (config: GitHubConfig): Promise<BookIndex> => {
   const file = await getFile(config, 'data/index.json');
   if (!file) {
@@ -143,7 +143,7 @@ export const getBookIndex = async (config: GitHubConfig): Promise<BookIndex> => 
   }
 };
 
-// ¶ÁÈ¡µ¥¸öÕË±¾
+// è¯»å–å•ä¸ªè´¦æœ¬
 export const getBook = async (config: GitHubConfig, bookId: string): Promise<Book | null> => {
   const file = await getFile(config, `data/${bookId}.json`);
   if (!file) return null;
@@ -154,27 +154,27 @@ export const getBook = async (config: GitHubConfig, bookId: string): Promise<Boo
   }
 };
 
-// ±£´æÕË±¾
+// ä¿å­˜è´¦æœ¬
 export const saveBook = async (config: GitHubConfig, book: Book): Promise<{ success: boolean; message?: string }> => {
-  // »ñÈ¡ÏÖÓĞÎÄ¼ş SHA
+  // è·å–ç°æœ‰æ–‡ä»¶ SHA
   const file = await getFile(config, `data/${book.id}.json`);
   const content = JSON.stringify(book, null, 2);
   const result = await putFile(
     config,
     `data/${book.id}.json`,
     content,
-    `¸üĞÂÕË±¾: ${book.name}`,
+    `æ›´æ–°è´¦æœ¬: ${book.name}`,
     file?.sha
   );
 
   if (result.success) {
-    // ¸üĞÂË÷Òı
+    // æ›´æ–°ç´¢å¼•
     await updateIndex(config, book);
   }
   return result;
 };
 
-// ¸üĞÂË÷Òı
+// æ›´æ–°ç´¢å¼•
 const updateIndex = async (config: GitHubConfig, book: Book): Promise<void> => {
   const index = await getBookIndex(config);
   const existingIdx = index.books.findIndex((b) => b.id === book.id);
@@ -198,16 +198,16 @@ const updateIndex = async (config: GitHubConfig, book: Book): Promise<void> => {
     config,
     'data/index.json',
     JSON.stringify(index, null, 2),
-    '¸üĞÂÕË±¾Ë÷Òı',
+    'æ›´æ–°è´¦æœ¬ç´¢å¼•',
     indexFile?.sha
   );
 };
 
-// É¾³ıÕË±¾
+// åˆ é™¤è´¦æœ¬
 export const deleteBookFile = async (config: GitHubConfig, bookId: string): Promise<{ success: boolean; message?: string }> => {
   const file = await getFile(config, `data/${bookId}.json`);
   if (!file) {
-    return { success: false, message: 'ÕË±¾²»´æÔÚ' };
+    return { success: false, message: 'è´¦æœ¬ä¸å­˜åœ¨' };
   }
 
   const branch = config.branch || 'main';
@@ -217,7 +217,7 @@ export const deleteBookFile = async (config: GitHubConfig, bookId: string): Prom
       method: 'DELETE',
       headers: getHeaders(config.token),
       body: JSON.stringify({
-        message: `É¾³ıÕË±¾: ${bookId}`,
+        message: `åˆ é™¤è´¦æœ¬: ${bookId}`,
         sha: file.sha,
         branch,
       }),
@@ -225,10 +225,10 @@ export const deleteBookFile = async (config: GitHubConfig, bookId: string): Prom
   );
 
   if (!response.ok) {
-    return { success: false, message: `É¾³ıÊ§°Ü: ${response.status}` };
+    return { success: false, message: `åˆ é™¤å¤±è´¥: ${response.status}` };
   }
 
-  // ´ÓË÷ÒıÖĞÒÆ³ı
+  // ä»ç´¢å¼•ä¸­ç§»é™¤
   const index = await getBookIndex(config);
   index.books = index.books.filter((b) => b.id !== bookId);
   const indexFile = await getFile(config, 'data/index.json');
@@ -236,18 +236,18 @@ export const deleteBookFile = async (config: GitHubConfig, bookId: string): Prom
     config,
     'data/index.json',
     JSON.stringify(index, null, 2),
-    '¸üĞÂÕË±¾Ë÷Òı',
+    'æ›´æ–°è´¦æœ¬ç´¢å¼•',
     indexFile?.sha
   );
 
   return { success: true };
 };
 
-// Ìí¼Ó¼ÇÂ¼
+// æ·»åŠ è®°å½•
 export const addRecordToBook = async (config: GitHubConfig, bookId: string, record: Omit<BookRecord, 'id' | 'createdAt'>): Promise<{ success: boolean; record?: BookRecord; message?: string }> => {
   const book = await getBook(config, bookId);
   if (!book) {
-    return { success: false, message: 'ÕË±¾²»´æÔÚ' };
+    return { success: false, message: 'è´¦æœ¬ä¸å­˜åœ¨' };
   }
 
   const newRecord: BookRecord = {
@@ -269,7 +269,7 @@ export const addRecordToBook = async (config: GitHubConfig, bookId: string, reco
 export const deleteRecordFromBook = async (config: GitHubConfig, bookId: string, recordId: string): Promise<{ success: boolean; message?: string }> => {
   const book = await getBook(config, bookId);
   if (!book) {
-    return { success: false, message: 'ÕË±¾²»´æÔÚ' };
+    return { success: false, message: 'è´¦æœ¬ä¸å­˜åœ¨' };
   }
 
   book.records = book.records.filter((r) => r.id !== recordId);

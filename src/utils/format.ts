@@ -1,4 +1,4 @@
-export const formatCurrency = (amount: number): string => {
+ï»¿export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('zh-CN', {
     style: 'currency',
     currency: 'CNY',
@@ -11,13 +11,13 @@ export const formatDate = (dateStr: string): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  const weekdays = ['ÖÜÈÕ', 'ÖÜÒ»', 'ÖÜ¶þ', 'ÖÜÈý', 'ÖÜËÄ', 'ÖÜÎå', 'ÖÜÁù'];
+  const weekdays = ['å‘¨æ—¥', 'å‘¨ä¸€', 'å‘¨äºŒ', 'å‘¨ä¸‰', 'å‘¨å››', 'å‘¨äº”', 'å‘¨å…­'];
   return `${year}-${month}-${day} ${weekdays[date.getDay()]}`;
 };
 
 export const formatMonth = (dateStr: string): string => {
   const date = new Date(dateStr);
-  return `${date.getFullYear()}Äê${date.getMonth() + 1}ÔÂ`;
+  return `${date.getFullYear()}å¹´${date.getMonth() + 1}æœˆ`;
 };
 
 export const getCurrentMonthRange = (): { start: string; end: string } => {

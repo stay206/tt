@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+ï»¿import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { SetupPage } from '@/pages/SetupPage';
 import { BooksPage } from '@/pages/BooksPage';
@@ -12,7 +12,7 @@ function AppContent() {
   const [deviceName, setDeviceName] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Æô¶¯Ê±£ºÓÅÏÈ´Ó URL ²ÎÊı¼ÓÔØ£¨·ÖÏíÁ´½Ó³¡¾°£©£¬·ñÔò´Ó localStorage ¼ÓÔØ
+  // å¯åŠ¨æ—¶ï¼šä¼˜å…ˆä» URL å‚æ•°åŠ è½½ï¼ˆåˆ†äº«é“¾æ¥åœºæ™¯ï¼‰ï¼Œå¦åˆ™ä» localStorage åŠ è½½
   useEffect(() => {
     const urlOwner = searchParams.get('owner');
     const urlRepo = searchParams.get('repo');
@@ -28,7 +28,7 @@ function AppContent() {
       };
       setGitHubConfig(sharedConfig);
       setConfig(sharedConfig);
-      // ÇåÀí URL ÉÏµÄÃô¸ĞĞÅÏ¢£¨½ö±£Áô owner/repo/branch£©
+      // æ¸…ç† URL ä¸Šçš„æ•æ„Ÿä¿¡æ¯ï¼ˆä»…ä¿ç•™ owner/repo/branchï¼‰
       const cleanParams = new URLSearchParams();
       cleanParams.set('owner', urlOwner);
       cleanParams.set('repo', urlRepo);

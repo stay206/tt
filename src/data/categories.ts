@@ -1,19 +1,19 @@
-import { Category } from '@/types';
+ï»¿import { Category } from '@/types';
 
 export const defaultCategories: Category[] = [
-  { id: '1', name: '²ÍÒû', type: 'expense', icon: '?', color: '#ef4444' },
-  { id: '2', name: '½»Í¨', type: 'expense', icon: '?', color: '#3b82f6' },
-  { id: '3', name: '¹ºÎï', type: 'expense', icon: '??', color: '#ec4899' },
-  { id: '4', name: 'ÓéÀÖ', type: 'expense', icon: '?', color: '#8b5cf6' },
-  { id: '5', name: 'Ò½ÁÆ', type: 'expense', icon: '?', color: '#10b981' },
-  { id: '6', name: '½ÌÓý', type: 'expense', icon: '?', color: '#f59e0b' },
-  { id: '7', name: '·¿×â', type: 'expense', icon: '?', color: '#6366f1' },
-  { id: '8', name: 'Ë®µç', type: 'expense', icon: '?', color: '#06b6d4' },
-  { id: '9', name: '¹¤×Ê', type: 'income', icon: '?', color: '#22c55e' },
-  { id: '10', name: '½±½ð', type: 'income', icon: '?', color: '#eab308' },
-  { id: '11', name: 'Í¶×Ê', type: 'income', icon: '?', color: '#84cc16' },
-  { id: '12', name: '¼æÖ°', type: 'income', icon: '?', color: '#0ea5e9' },
-  { id: '13', name: 'ÆäËû', type: 'income', icon: '?', color: '#f97316' },
+  { id: '1', name: 'é¤é¥®', type: 'expense', icon: '?', color: '#ef4444' },
+  { id: '2', name: 'äº¤é€š', type: 'expense', icon: '?', color: '#3b82f6' },
+  { id: '3', name: 'è´­ç‰©', type: 'expense', icon: '??', color: '#ec4899' },
+  { id: '4', name: 'å¨±ä¹', type: 'expense', icon: '?', color: '#8b5cf6' },
+  { id: '5', name: 'åŒ»ç–—', type: 'expense', icon: '?', color: '#10b981' },
+  { id: '6', name: 'æ•™è‚²', type: 'expense', icon: '?', color: '#f59e0b' },
+  { id: '7', name: 'æˆ¿ç§Ÿ', type: 'expense', icon: '?', color: '#6366f1' },
+  { id: '8', name: 'æ°´ç”µ', type: 'expense', icon: '?', color: '#06b6d4' },
+  { id: '9', name: 'å·¥èµ„', type: 'income', icon: '?', color: '#22c55e' },
+  { id: '10', name: 'å¥–é‡‘', type: 'income', icon: '?', color: '#eab308' },
+  { id: '11', name: 'æŠ•èµ„', type: 'income', icon: '?', color: '#84cc16' },
+  { id: '12', name: 'å…¼èŒ', type: 'income', icon: '?', color: '#0ea5e9' },
+  { id: '13', name: 'å…¶ä»–', type: 'income', icon: '?', color: '#f97316' },
 ];
 
 export const getCategoriesByType = (type: 'income' | 'expense'): Category[] => {
