@@ -3,24 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Redirecting...</title>
+    <title>多人记账本</title>
     <script>
-      (function() {
-        var path = window.location.pathname;
-        // 移除末尾的斜杠
-        path = path.replace(/\/$/, '');
-        // 如果路径不是以 /tt/ 开头，添加 /tt/
-        if (!path.startsWith('/tt')) {
-          path = '/tt' + path;
-        }
-        // 如果没有路径，指向 /tt/index.html
-        if (path === '/tt' || path === '/tt/') {
-          window.location.href = window.location.origin + '/tt/index.html';
-        } else {
-          // 否则指向 index.html 并带上查询参数
-          window.location.href = window.location.origin + '/tt/index.html';
-        }
-      })();
+      // 无论什么路径，都直接跳转到 index.html
+      window.location.href = '/tt/index.html';
     </script>
   </head>
   <body>
