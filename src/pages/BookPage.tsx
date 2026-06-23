@@ -51,6 +51,20 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [newMemberName, setNewMemberName] = useState('');
   const [error, setError] = useState('');
   const [syncing, setSyncing] = useState(false);
+  const [showIdentitySelect, setShowIdentitySelect] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string>(deviceName);
+
+  // 检查并设置当前用户身份
+  useEffect(() => {
+    if (book && book.members.length > 0) {
+      const savedUser = localStorage.getItem(`book_user_${bookId}`);
+      if (savedUser && book.members.some(m => m.name === savedUser)) {
+        setCurrentUser(savedUser);
+      } else {
+        setShowIdentitySelect(true);
+      }
+    }
+  }, [book, bookId]);
 
   const loadBook = async () => {
     if (!bookId) {
@@ -139,6 +153,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setIsModalOpen(true);
   };
 
+  const handleSelectIdentity = (name: string) => {
+    localStorage.setItem(`book_user_${bookId}`, name);
+    setCurrentUser(name);
+    setShowIdentitySelect(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -163,6 +183,42 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     );
   }
 
+  // 身份选择界面
+  if (showIdentitySelect && book.members.length > 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="w-8 h-8 text-primary-500" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">选择你的身份</h2>
+            <p className="text-gray-500 mt-2 text-sm">请从账本成员中选择你的身份</p>
+          </div>
+          <div className="space-y-2 mb-4">
+            {book.members.map((member) => (
+              <button
+                key={member.name}
+                onClick={() => handleSelectIdentity(member.name)}
+                className="w-full p-4 bg-gray-50 hover:bg-primary-50 border border-gray-200 hover:border-primary-300 rounded-xl text-left transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                    <span className="text-lg">{member.name.charAt(0)}</span>
+                  </div>
+                  <span className="font-medium text-gray-800">{member.name}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 text-center">
+            如果你是新成员，请联系管理员添加你的身份
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const filteredRecords = book.records.filter((record) => {
     const matchesMonth = getMonthKey(record.date) === selectedMonth;
     const matchesSearch =
@@ -179,7 +235,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
   // 本月个人支出（当前用户参与的支出）
   const monthlyPersonalExpense = book.records
-    .filter((r) => r.type === 'expense' && getMonthKey(r.date) === selectedMonth && r.participants?.includes(deviceName))
+    .filter((r) => r.type === 'expense' && getMonthKey(r.date) === selectedMonth && r.participants?.includes(currentUser))
     .reduce((sum, r) => {
       const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
       return sum + perPerson;
@@ -192,7 +248,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
   // 计算结余
   const balances = calculateBalances(book.records.filter(r => getMonthKey(r.date) === selectedMonth), book.members);
-  const myBalance = balances[deviceName] || 0;
+  const myBalance = balances[currentUser] || 0;
 
   // 找出应该支付给谁
   const settlements: { from: string; to: string; amount: number }[] = [];
@@ -306,11 +362,11 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
                 <p className="text-sm text-gray-500 mb-2">结算建议</p>
-                {settlements.filter(s => s.from === deviceName || s.to === deviceName).length > 0 ? (
+                {settlements.filter(s => s.from === currentUser || s.to === currentUser).length > 0 ? (
                   <div className="space-y-1">
-                    {settlements.filter(s => s.from === deviceName || s.to === deviceName).map((s, i) => (
+                    {settlements.filter(s => s.from === currentUser || s.to === currentUser).map((s, i) => (
                       <p key={i} className="text-sm">
-                        {s.from === deviceName ? `应付给 ${s.to}` : `${s.from} 应付给你`}：¥{s.amount.toFixed(2)}
+                        {s.from === currentUser ? `应付给 ${s.to}` : `${s.from} 应付给你`}：¥{s.amount.toFixed(2)}
                       </p>
                     ))}
                   </div>
@@ -380,7 +436,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         onAdd={loadBook}
         config={config}
         bookId={bookId}
-        deviceName={deviceName}
+        deviceName={currentUser}
         book={book}
         editRecord={editRecord}
       />
@@ -411,8 +467,13 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               <div className="space-y-2">
                 {book.members.map((member) => (
                   <div key={member.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                    <span className="font-medium text-gray-800">{member.name}</span>
-                    {member.name !== deviceName && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-800">{member.name}</span>
+                      {member.name === currentUser && (
+                        <span className="text-xs text-primary-500 bg-primary-50 px-2 py-0.5 rounded">当前</span>
+                      )}
+                    </div>
+                    {member.name !== currentUser && (
                       <button onClick={() => handleDeleteMember(member.name)} className="text-rose-500 hover:text-rose-600 text-sm">
                         删除
                       </button>
