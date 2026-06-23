@@ -108,7 +108,7 @@ const putFile = async (
   const branch = config.branch || 'main';
   const body: any = {
     message,
-    content: btoa(unescape(encodeURIComponent(content))),
+    content: btoa(String.fromCharCode(...new TextEncoder().encode(content))),
     branch,
   };
   if (sha) {
