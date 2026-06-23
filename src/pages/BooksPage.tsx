@@ -10,7 +10,7 @@ interface BooksPageProps {
   onConfigChange: () => void;
 }
 
-const BOOK_ICONS = ['?', '?', '?', '??', '?', '??', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?'];
+const BOOK_ICONS = ['📕', '📗', '📘', '📙', '📓', '📒', '📔', '📚', '💳', '💰', '💵', '💴', '💶', '💷', '🧾', '📋', '📝', '🏦', '💎', '⭐'];
 
 export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps) => {
   const navigate = useNavigate();
