@@ -1,11 +1,18 @@
 {
   "books": [
     {
-      "id": "团队-mqqs2y3t",
-      "name": "团队",
+      "id": "å¢é-mqqs2y3t",
+      "name": "å¢é",
       "description": "",
       "icon": "?",
       "updatedAt": "2026-06-23T15:07:18.185Z"
+    },
+    {
+      "id": "测试-mqqsu9j0",
+      "name": "测试",
+      "description": "",
+      "icon": "📕",
+      "updatedAt": "2026-06-23T15:28:32.700Z"
     }
   ]
 }
