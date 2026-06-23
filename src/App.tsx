@@ -1,5 +1,5 @@
 ﻿﻿﻿import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { SetupPage } from '@/pages/SetupPage';
 import { BooksPage } from '@/pages/BooksPage';
 import { BookPage } from '@/pages/BookPage';
@@ -89,9 +89,9 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter basename="/tt">
+    <HashRouter>
       <AppContent />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

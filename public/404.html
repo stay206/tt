@@ -7,12 +7,19 @@
     <script>
       (function() {
         var path = window.location.pathname;
+        // 移除末尾的斜杠
+        path = path.replace(/\/$/, '');
         // 如果路径不是以 /tt/ 开头，添加 /tt/
-        if (!path.startsWith('/tt/')) {
+        if (!path.startsWith('/tt')) {
           path = '/tt' + path;
         }
-        // 如果是目录（没有扩展名），添加 /tt/ 前缀并指向 index.html
-        window.location.href = window.location.origin + path + (path.endsWith('/') ? 'index.html' : '/index.html');
+        // 如果没有路径，指向 /tt/index.html
+        if (path === '/tt' || path === '/tt/') {
+          window.location.href = window.location.origin + '/tt/index.html';
+        } else {
+          // 否则指向 index.html 并带上查询参数
+          window.location.href = window.location.origin + '/tt/index.html';
+        }
       })();
     </script>
   </head>
