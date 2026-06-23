@@ -204,6 +204,24 @@ const updateIndex = async (config: GitHubConfig, book: Book): Promise<void> => {
   );
 };
 
+// 重置所有数据（清理乱码）
+export const resetAllData = async (config: GitHubConfig): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const indexFile = await getFile(config, 'data/index.json');
+    const emptyIndex = { books: [] };
+    const result = await putFile(
+      config,
+      'data/index.json',
+      JSON.stringify(emptyIndex, null, 2),
+      '重置账本索引',
+      indexFile?.sha
+    );
+    return result;
+  } catch (e: any) {
+    return { success: false, message: e.message || '重置失败' };
+  }
+};
+
 // 删除账本
 export const deleteBookFile = async (config: GitHubConfig, bookId: string): Promise<{ success: boolean; message?: string }> => {
   const file = await getFile(config, `data/${bookId}.json`);

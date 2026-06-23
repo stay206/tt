@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Share2, Copy, Check } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
-import { getBookIndex, getBook, saveBook, deleteBookFile } from '@/utils/github';
+import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData } from '@/utils/github';
 
 interface BooksPageProps {
   config: GitHubConfig;
@@ -106,6 +106,24 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
               title="修改配置"
             >
               <Settings className="w-5 h-5" />
+            </button>
+            <button
+              onClick={async () => {
+                if (window.confirm('确定要重置所有数据吗？此操作不可恢复！')) {
+                  const result = await resetAllData(config);
+                  if (result.success) {
+                    setMessage('数据已重置');
+                    await loadIndex();
+                  } else {
+                    setError(result.message || '重置失败');
+                  }
+                  setTimeout(() => setMessage(''), 3000);
+                }
+              }}
+              className="p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl"
+              title="重置所有数据"
+            >
+              <Trash2 className="w-5 h-5" />
             </button>
           </div>
         </div>
