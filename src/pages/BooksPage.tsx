@@ -234,6 +234,7 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
       {showCreate && (
         <CreateBookModal
           config={config}
+          deviceName={deviceName}
           onClose={() => setShowCreate(false)}
           onSuccess={async () => {
             setShowCreate(false);
@@ -265,7 +266,7 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
   );
 };
 
-const CreateBookModal = ({ config, onClose, onSuccess }: { config: GitHubConfig; onClose: () => void; onSuccess: () => void }) => {
+const CreateBookModal = ({ config, deviceName, onClose, onSuccess }: { config: GitHubConfig; deviceName: string; onClose: () => void; onSuccess: () => void }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('📕');
@@ -288,6 +289,7 @@ const CreateBookModal = ({ config, onClose, onSuccess }: { config: GitHubConfig;
       description: description.trim(),
       icon,
       records: [],
+      members: [{ name: deviceName, addedAt: new Date().toISOString() }],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
