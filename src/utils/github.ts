@@ -1,4 +1,4 @@
-﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
@@ -93,7 +93,8 @@ const getFile = async (config: GitHubConfig, path: string): Promise<{ content: s
   }
 
   const data: RepoFileResponse = await response.json();
-  const content = atob(data.content.replace(/\n/g, ''));
+  const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, '')), c => c.charCodeAt(0));
+  const content = new TextDecoder('utf-8').decode(bytes);
   return { content, sha: data.sha };
 };
 

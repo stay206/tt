@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿﻿import { useState } from 'react';
 import { X } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
 import { GitHubConfig } from '@/types';

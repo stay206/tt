@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Share2, Copy, Check } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
@@ -250,7 +250,7 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
 const CreateBookModal = ({ config, onClose, onSuccess }: { config: GitHubConfig; onClose: () => void; onSuccess: () => void }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('?');
+  const [icon, setIcon] = useState('📕');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 

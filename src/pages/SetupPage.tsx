@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿﻿import { useState, useEffect } from 'react';
 import { Github, Eye, EyeOff, ArrowRight, Info, ExternalLink } from 'lucide-react';
 import { GitHubConfig } from '@/types';
 import { setGitHubConfig, getGitHubConfig, testConnection, getDeviceName, setDeviceName } from '@/utils/github';
@@ -112,7 +112,7 @@ export const SetupPage = ({ onConfigured }: SetupPageProps) => {
               mode === 'admin' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500'
             }`}
           >
-            ? 管理员模式
+            👤 管理员模式
           </button>
           <button
             type="button"
@@ -121,7 +121,7 @@ export const SetupPage = ({ onConfigured }: SetupPageProps) => {
               mode === 'viewer' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500'
             }`}
           >
-            ? 访客模式
+            👥 访客模式
           </button>
         </div>
 
@@ -259,9 +259,9 @@ export const SetupPage = ({ onConfigured }: SetupPageProps) => {
             <Info className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-gray-500 space-y-1">
               <p className="font-medium text-gray-700">工作原理</p>
-              <p>? 管理员配置仓库后，所有账本数据保存到该仓库的 <code>data/</code> 目录</p>
-              <p>? 其他用户通过「访客模式」打开同一仓库地址即可查看数据</p>
-              <p>? 适合家庭/团队共用一个 GitHub 账号的场景</p>
+              <p>• 管理员配置仓库后，所有账本数据保存到该仓库的 <code>data/</code> 目录</p>
+              <p>• 其他用户通过「访客模式」打开同一仓库地址即可查看数据</p>
+              <p>• 适合家庭/团队共用一个 GitHub 账号的场景</p>
             </div>
           </div>
         </div>
