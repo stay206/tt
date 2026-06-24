@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Share2, Copy, Check } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
@@ -462,7 +462,7 @@ const ShareModal = ({ config, onClose }: { config: GitHubConfig; onClose: () => 
   const [copied, setCopied] = useState(false);
 
   const buildUrl = (withToken: boolean) => {
-    const base = window.location.origin + window.location.pathname;
+    const base = window.location.origin + '/tt/';
     const params = new URLSearchParams();
     params.set('owner', config.owner);
     params.set('repo', config.repo);
@@ -472,7 +472,7 @@ const ShareModal = ({ config, onClose }: { config: GitHubConfig; onClose: () => 
     if (withToken && config.token) {
       params.set('token', config.token);
     }
-    return `${base}?${params.toString()}`;
+    return `${base}#/?${params.toString()}`;
   };
 
   const shareUrl = buildUrl(includeToken);
