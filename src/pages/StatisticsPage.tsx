@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Chart as ChartJS, ArcElement, BarElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, Filler } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
@@ -19,7 +19,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
   const { bookId = '' } = useParams<{ bookId: string }>();
   const [book, setBook] = useState<Book | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date().toISOString()));
-  const [selectedUser, setSelectedUser] = useState<string>('all');
+  const [selectedUser, setSelectedUser] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
@@ -35,7 +35,6 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
         setBook(b);
         localStorage.setItem(`current_book_cache_${bookId}`, JSON.stringify(b));
       } else {
-        // 尝试缓存
         const cached = localStorage.getItem(`current_book_cache_${bookId}`);
         if (cached) setBook(JSON.parse(cached));
       }
@@ -45,6 +44,17 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (book && book.members.length > 0) {
+      const savedUser = localStorage.getItem(`book_user_${bookId}`);
+      if (savedUser && book.members.some(m => m.name === savedUser)) {
+        setSelectedUser(savedUser);
+      } else if (book.members.length > 0) {
+        setSelectedUser(book.members[0].name);
+      }
+    }
+  }, [book, bookId]);
 
   useEffect(() => {
     loadBook();
@@ -82,17 +92,26 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
 
   const monthRecords = book.records.filter((r) => (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth));
 
-  const expenseByCategory = monthRecords
+  const currentUser = selectedUser || book.members[0]?.name || '';
+  const isAllUsers = selectedUser === 'all';
+
+  const filteredRecords = isAllUsers
+    ? monthRecords
+    : monthRecords.filter((r) => r.participants?.includes(currentUser));
+
+  const expenseByCategory = filteredRecords
     .filter((r) => r.type === 'expense')
     .reduce((acc, r) => {
-      acc[r.category] = (acc[r.category] || 0) + r.amount;
+      const amount = isAllUsers ? r.amount : Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
+      acc[r.category] = (acc[r.category] || 0) + amount;
       return acc;
     }, {} as { [key: string]: number });
 
-  const incomeByCategory = monthRecords
+  const incomeByCategory = filteredRecords
     .filter((r) => r.type === 'income')
     .reduce((acc, r) => {
-      acc[r.category] = (acc[r.category] || 0) + r.amount;
+      const amount = isAllUsers ? r.amount : Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
+      acc[r.category] = (acc[r.category] || 0) + amount;
       return acc;
     }, {} as { [key: string]: number });
 
@@ -126,7 +145,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
 
   const trendData = {
     labels: months.slice(1).map((m) => m.label),
-    datasets: selectedUser === 'all' ? [
+    datasets: isAllUsers ? [
       {
         label: '收入',
         data: months.slice(1).map((m) =>
@@ -157,10 +176,10 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
       },
     ] : [
       {
-        label: `${selectedUser} 的支出`,
+        label: `${currentUser} 的支出`,
         data: months.slice(1).map((m) =>
           book.records
-            .filter((r) => r.type === 'expense' && getMonthKey(r.date) === m.key && r.participants?.includes(selectedUser))
+            .filter((r) => r.type === 'expense' && getMonthKey(r.date) === m.key && r.participants?.includes(currentUser))
             .reduce((sum, r) => {
               const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
               return sum + perPerson;
@@ -174,10 +193,10 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
         pointHoverRadius: 6,
       },
       {
-        label: `${selectedUser} 的收入`,
+        label: `${currentUser} 的收入`,
         data: months.slice(1).map((m) =>
           book.records
-            .filter((r) => r.type === 'income' && getMonthKey(r.date) === m.key && r.participants?.includes(selectedUser))
+            .filter((r) => r.type === 'income' && getMonthKey(r.date) === m.key && r.participants?.includes(currentUser))
             .reduce((sum, r) => {
               const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
               return sum + perPerson;
@@ -222,7 +241,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
       <main className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
         <div className="flex items-center justify-end gap-4">
           <select
-            value={selectedUser}
+            value={selectedUser === '' ? book.members[0]?.name || 'all' : selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
             className="appearance-none pl-4 pr-10 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
           >

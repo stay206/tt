@@ -1,8 +1,8 @@
 ﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { X, Users, User } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
-import { Book, Record as BookRecord } from '@/types';
-import { addToQueue } from '@/utils/offlineQueue';
+import { Book, Record as BookRecord, GitHubConfig } from '@/types';
+import { addRecordToBook, saveBook, getBook } from '@/utils/github';
 
 interface AddRecordModalProps {
   isOpen: boolean;
@@ -12,9 +12,10 @@ interface AddRecordModalProps {
   deviceName: string;
   book: Book | null;
   editRecord?: BookRecord | null;
+  config: GitHubConfig;
 }
 
-export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, book, editRecord }: AddRecordModalProps) => {
+export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, book, editRecord, config }: AddRecordModalProps) => {
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -79,59 +80,68 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, boo
     setSubmitting(true);
     setError('');
 
-    if (editRecord) {
-      // 编辑模式 - 添加到本地队列
-      const updatedRecord: BookRecord = {
-        ...editRecord,
-        type,
-        amount: parseFloat(amount),
-        category,
-        note,
-        date,
-        payer,
-        participants,
-      };
-
-      addToQueue({
-        type: 'edit_record',
-        bookId,
-        data: updatedRecord,
-      });
-
+    try {
+      if (editRecord) {
+        const bookData = await getBook(config, bookId);
+        if (!bookData) {
+          setError('账本不存在');
+          setSubmitting(false);
+          return;
+        }
+        const updatedRecord: BookRecord = {
+          ...editRecord,
+          type,
+          amount: parseFloat(amount),
+          category,
+          note,
+          date,
+          payer,
+          participants,
+        };
+        const idx = bookData.records.findIndex(r => r.id === editRecord.id);
+        if (idx !== -1) {
+          bookData.records[idx] = updatedRecord;
+          bookData.updatedAt = new Date().toISOString();
+          const result = await saveBook(config, bookData);
+          if (!result.success) {
+            setError(result.message || '保存失败');
+            setSubmitting(false);
+            return;
+          }
+        }
+        setSubmitting(false);
+        onClose();
+        onAdd();
+      } else {
+        const result = await addRecordToBook(config, bookId, {
+          type,
+          amount: parseFloat(amount),
+          category,
+          note,
+          date,
+          createdBy: deviceName,
+          payer,
+          participants,
+        });
+        if (!result.success) {
+          setError(result.message || '保存失败');
+          setSubmitting(false);
+          return;
+        }
+        setSubmitting(false);
+        setType('expense');
+        setAmount('');
+        setCategory('');
+        setNote('');
+        setDate(new Date().toISOString().split('T')[0]);
+        setPayer(deviceName);
+        setParticipants([deviceName]);
+        onClose();
+        onAdd();
+      }
+    } catch (err: any) {
+      setError(err.message || '保存失败');
       setSubmitting(false);
-      onClose();
-      onAdd();
-    } else {
-      // 新增模式 - 添加到本地队列
-      const newRecord: BookRecord = {
-        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 6),
-        type,
-        amount: parseFloat(amount),
-        category,
-        note,
-        date,
-        createdBy: deviceName,
-        createdAt: new Date().toISOString(),
-        payer,
-        participants,
-      };
-
-      addToQueue({
-        type: 'add_record',
-        bookId,
-        data: newRecord,
-      });
-
-      setSubmitting(false);
-      setType('expense');
-      setAmount('');
-      setCategory('');
-      setNote('');
-      setDate(new Date().toISOString().split('T')[0]);
-      setPayer(deviceName);
-      setParticipants([deviceName]);
-      onClose();
-      onAdd();
     }
   };
 

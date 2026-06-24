@@ -1,36 +1,44 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { AddRecordModal } from '@/components/AddRecordModal';
 import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
-import { getBook } from '@/utils/github';
+import { getBook, saveBook, deleteRecordFromBook, addRecordToBook } from '@/utils/github';
 import { getMonthKey } from '@/utils/format';
 import { getCategoriesByType } from '@/data/categories';
-import { applyQueueToBook, syncQueue, getSyncStatus, addToQueue, startAutoSync, stopAutoSync } from '@/utils/offlineQueue';
 
 interface BookPageProps {
   config: GitHubConfig;
   deviceName: string;
 }
 
-// 计算结余：付款人应收其他人，其他人应付给付款人
 const calculateBalances = (records: BookRecord[], members: BookMember[]) => {
   const balances: Record<string, number> = {};
   members.forEach(m => balances[m.name] = 0);
 
   records.filter(r => r.type === 'expense' && r.participants && r.participants.length > 0).forEach(record => {
     const perPerson = Math.round(record.amount / record.participants.length * 100) / 100;
-    // 付款人应收其他参与者的份额
     if (balances[record.payer] !== undefined) {
       record.participants.forEach(p => {
         if (p !== record.payer && balances[p] !== undefined) {
-          // 参与者欠付款人
           balances[p] -= perPerson;
-          // 付款人应收
           balances[record.payer] += perPerson;
         }
       });
+    }
+  });
+
+  records.filter(r => r.type === 'income' && r.participants && r.participants.length >= 2).forEach(record => {
+    const perPerson = Math.round(record.amount / (record.participants.length - 1) * 100) / 100;
+    const payerIndex = record.participants.indexOf(record.payer || '');
+    record.participants.forEach((p, idx) => {
+      if (idx !== payerIndex && balances[p] !== undefined) {
+        balances[p] += perPerson;
+      }
+    });
+    if (record.payer && balances[record.payer] !== undefined) {
+      balances[record.payer] -= record.amount;
     }
   });
 
@@ -52,7 +60,6 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [syncing, setSyncing] = useState(false);
   const [showIdentitySelect, setShowIdentitySelect] = useState(false);
   const [currentUser, setCurrentUser] = useState<string>(deviceName);
-  const [pendingCount, setPendingCount] = useState(0);
 
   // 检查并设置当前用户身份
   useEffect(() => {
@@ -78,77 +85,40 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setLoading(true);
     setError('');
     try {
-      let b = await getBook(config, bookId);
+      const b = await getBook(config, bookId);
       if (b) {
-        // 确保 members 字段存在
         if (!b.members) b.members = [];
-        // 应用本地队列中的操作
-        b = applyQueueToBook(b);
         setBook(b);
         localStorage.setItem(`current_book_cache_${bookId}`, JSON.stringify(b));
       } else {
-        setError('账本不存在');
+        const cached = localStorage.getItem(`current_book_cache_${bookId}`);
+        if (cached) {
+          setBook(JSON.parse(cached));
+          setError('网络错误，已显示缓存数据');
+        } else {
+          setError('账本不存在');
+        }
       }
     } catch (e: any) {
       const cached = localStorage.getItem(`current_book_cache_${bookId}`);
       if (cached) {
-        let b = JSON.parse(cached);
-        b = applyQueueToBook(b);
-        setBook(b);
+        setBook(JSON.parse(cached));
         setError('网络错误，已显示缓存数据');
       } else {
         setError(e.message || '加载失败');
       }
     }
-    // 更新待同步数量
-    const status = getSyncStatus();
-    setPendingCount(status.pendingCount);
     setLoading(false);
   };
 
   useEffect(() => {
     loadBook();
-
-    startAutoSync(
-      config,
-      () => {
-        loadBook();
-      },
-      (err) => {
-        setError(err);
-      }
-    );
-
-    const refreshTimer = setInterval(() => {
-      loadBook();
-    }, 15000);
-
-    return () => {
-      stopAutoSync();
-      clearInterval(refreshTimer);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId]);
 
   const handleRefresh = async () => {
     setSyncing(true);
     await loadBook();
-    setSyncing(false);
-  };
-
-  const handleSync = async () => {
-    setSyncing(true);
-    setError('');
-    try {
-      const result = await syncQueue(config);
-      if (result.success) {
-        await loadBook();
-      } else {
-        setError(result.message || '同步失败');
-      }
-    } catch (e: any) {
-      setError(e.message || '同步失败');
-    }
     setSyncing(false);
   };
 
@@ -160,50 +130,38 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       return;
     }
 
-    // 添加到本地队列
-    addToQueue({
-      type: 'add_member',
-      bookId,
-      data: { name: newMemberName.trim(), addedAt: new Date().toISOString() },
-    });
-
-    // 更新本地显示
     const updatedBook: Book = {
       ...book,
       members: [...book.members, { name: newMemberName.trim(), addedAt: new Date().toISOString() }],
       updatedAt: new Date().toISOString(),
     };
-    setBook(updatedBook);
-    setNewMemberName('');
-    setShowMembers(false);
-
-    // 更新待同步数量
-    const status = getSyncStatus();
-    setPendingCount(status.pendingCount);
+    const result = await saveBook(config, updatedBook);
+    if (result.success) {
+      setBook(updatedBook);
+      setNewMemberName('');
+      setShowMembers(false);
+      setError('');
+    } else {
+      setError(result.message || '添加失败');
+    }
   };
 
   const handleDeleteMember = async (name: string) => {
     if (!book) return;
     if (!window.confirm(`确定要删除成员「${name}」吗？`)) return;
 
-    // 添加到本地队列
-    addToQueue({
-      type: 'delete_member',
-      bookId,
-      data: { name },
-    });
-
-    // 更新本地显示
     const updatedBook: Book = {
       ...book,
       members: book.members.filter(m => m.name !== name),
       updatedAt: new Date().toISOString(),
     };
-    setBook(updatedBook);
-
-    // 更新待同步数量
-    const status = getSyncStatus();
-    setPendingCount(status.pendingCount);
+    const result = await saveBook(config, updatedBook);
+    if (result.success) {
+      setBook(updatedBook);
+      setError('');
+    } else {
+      setError(result.message || '删除失败');
+    }
   };
 
   const handleEditRecord = (record: BookRecord) => {
@@ -211,28 +169,22 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteRecord = (recordId: string) => {
+  const handleDeleteRecord = async (recordId: string) => {
     if (!book) return;
     if (!window.confirm('确定要删除这条记录吗？')) return;
 
-    // 添加到本地队列
-    addToQueue({
-      type: 'delete_record',
-      bookId,
-      data: { recordId },
-    });
-
-    // 更新本地显示
-    const updatedBook: Book = {
-      ...book,
-      records: book.records.filter(r => r.id !== recordId),
-      updatedAt: new Date().toISOString(),
-    };
-    setBook(updatedBook);
-
-    // 更新待同步数量
-    const status = getSyncStatus();
-    setPendingCount(status.pendingCount);
+    const result = await deleteRecordFromBook(config, bookId, recordId);
+    if (result.success) {
+      const updatedBook: Book = {
+        ...book,
+        records: book.records.filter(r => r.id !== recordId),
+        updatedAt: new Date().toISOString(),
+      };
+      setBook(updatedBook);
+      setError('');
+    } else {
+      setError(result.message || '删除失败');
+    }
   };
 
   const handleSelectIdentity = (name: string) => {
@@ -315,18 +267,24 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth))
     .reduce((sum, r) => sum + r.amount, 0);
 
-  // 本月个人支出（当前用户参与的支出）
+  // 本月个人支出（付款人显示实际付款金额，参与者显示分摊金额）
   const monthlyPersonalExpense = book.records
     .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth) && r.participants?.includes(currentUser))
     .reduce((sum, r) => {
+      if (r.payer === currentUser) {
+        return sum + r.amount;
+      }
       const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
       return sum + perPerson;
     }, 0);
 
-  // 本月收入
+  // 本月收入（收款部分）
   const monthlyIncome = book.records
-    .filter((r) => r.type === 'income' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth))
-    .reduce((sum, r) => sum + r.amount, 0);
+    .filter((r) => r.type === 'income' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth) && r.participants?.includes(currentUser) && r.payer !== currentUser)
+    .reduce((sum, r) => {
+      const perPerson = Math.round(r.amount / (r.participants?.length - 1 || 1) * 100) / 100;
+      return sum + perPerson;
+    }, 0);
 
   // 计算结余
   const balances = calculateBalances(book.records.filter(r => selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth), book.members);
@@ -377,12 +335,6 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {pendingCount > 0 && (
-              <button onClick={handleSync} disabled={syncing} className="flex items-center gap-1 px-3 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition-colors" title="同步待提交数据">
-                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                <span className="text-sm font-medium">{pendingCount} 待同步</span>
-              </button>
-            )}
             <button onClick={() => setShowMembers(true)} className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl" title="成员管理">
               <Users className="w-5 h-5" />
             </button>
@@ -551,6 +503,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         deviceName={currentUser}
         book={book}
         editRecord={editRecord}
+        config={config}
       />
 
       {/* 成员管理弹窗 */}
@@ -666,39 +619,42 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               </div>
 
               <button
-                onClick={() => {
+                onClick={async () => {
                   const total = selectedSettleUsers.reduce((sum, u) => sum + parseFloat(settleAmounts[u] || '0'), 0);
                   if (total <= 0) {
                     alert('请选择至少一个结算对象并输入金额');
                     return;
                   }
 
-                  selectedSettleUsers.forEach(toUser => {
+                  let allSuccess = true;
+                  for (const toUser of selectedSettleUsers) {
                     const amount = parseFloat(settleAmounts[toUser] || '0');
                     if (amount > 0) {
-                      addToQueue({
-                        type: 'add_record',
-                        bookId,
-                        data: {
-                          id: Date.now().toString(36) + Math.random().toString(36).substr(2, 6),
-                          type: 'income' as const,
-                          amount,
-                          category: '其他',
-                          note: `${currentUser} 结算给 ${toUser}`,
-                          date: new Date().toISOString().split('T')[0],
-                          createdBy: currentUser,
-                          createdAt: new Date().toISOString(),
-                          payer: currentUser,
-                          participants: [currentUser, toUser],
-                        },
+                      const result = await addRecordToBook(config, bookId, {
+                        type: 'income',
+                        amount,
+                        category: '其他',
+                        note: `${currentUser} 结算给 ${toUser}`,
+                        date: new Date().toISOString().split('T')[0],
+                        createdBy: currentUser,
+                        payer: currentUser,
+                        participants: [toUser, currentUser],
                       });
+                      if (!result.success) {
+                        allSuccess = false;
+                        break;
+                      }
                     }
-                  });
+                  }
 
-                  setShowSettleModal(false);
-                  setSelectedSettleUsers([]);
-                  setSettleAmounts({});
-                  loadBook();
+                  if (allSuccess) {
+                    setShowSettleModal(false);
+                    setSelectedSettleUsers([]);
+                    setSettleAmounts({});
+                    loadBook();
+                  } else {
+                    setError('结算失败');
+                  }
                 }}
                 disabled={selectedSettleUsers.length === 0}
                 className="w-full py-3 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
