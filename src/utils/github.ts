@@ -93,7 +93,11 @@ const getFile = async (config: GitHubConfig, path: string): Promise<{ content: s
   }
 
   const data: RepoFileResponse = await response.json();
-  const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, '')), c => c.charCodeAt(0));
+  const decoded = atob(data.content.replace(/\n/g, ''));
+  const bytes = new Uint8Array(decoded.length);
+  for (let i = 0; i < decoded.length; i++) {
+    bytes[i] = decoded.charCodeAt(i);
+  }
   const content = new TextDecoder('utf-8').decode(bytes);
   return { content, sha: data.sha };
 };

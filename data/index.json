@@ -1,10 +1,10 @@
 {
   "books": [
     {
-      "id": "账本-mqqti1vn",
-      "name": "账本",
+      "id": "book-mqqti1vn",
+      "name": "�˱�",
       "description": "",
-      "icon": "📕",
+      "icon": "?",
       "updatedAt": "2026-06-24T00:59:06.623Z"
     }
   ]
