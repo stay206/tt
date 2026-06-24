@@ -3,7 +3,6 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.example.expensetracker"
     compileSdk = rootProject.ext.compileSdkVersion
-    buildToolsVersion "34.0.0"
     defaultConfig {
         applicationId "com.example.expensetracker"
         minSdkVersion rootProject.ext.minSdkVersion
