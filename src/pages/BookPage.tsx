@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -30,11 +30,10 @@ const calculateBalances = (records: BookRecord[], members: BookMember[]) => {
   });
 
   records.filter(r => r.type === 'income' && r.participants && r.participants.length >= 2).forEach(record => {
-    const perPerson = Math.round(record.amount / (record.participants.length - 1) * 100) / 100;
     const payerIndex = record.participants.indexOf(record.payer || '');
     record.participants.forEach((p, idx) => {
       if (idx !== payerIndex && balances[p] !== undefined) {
-        balances[p] -= perPerson;
+        balances[p] -= record.amount;
       }
     });
     if (record.payer && balances[record.payer] !== undefined) {
@@ -285,16 +284,10 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth))
     .reduce((sum, r) => sum + r.amount, 0);
 
-  // 本月个人支出（付款人显示实际付款金额，参与者显示分摊金额）
+  // 本月个人支出（只有付款人显示实际付款金额，参与者不显示支出）
   const monthlyPersonalExpense = book.records
-    .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth) && r.participants?.includes(currentUser))
-    .reduce((sum, r) => {
-      if (r.payer === currentUser) {
-        return sum + r.amount;
-      }
-      const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
-      return sum + perPerson;
-    }, 0);
+    .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth) && r.payer === currentUser)
+    .reduce((sum, r) => sum + r.amount, 0);
 
   // 本月收入（收款部分）
   const monthlyIncome = book.records
