@@ -5,6 +5,90 @@
   "icon": "📕",
   "records": [
     {
+      "id": "mqrs2ix58hpj9n",
+      "type": "expense",
+      "amount": 128.57,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-05-23",
+      "createdAt": "2026-06-24T07:54:44.681Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
+      "id": "mqrs1yumojiwiq",
+      "type": "expense",
+      "amount": 47.91,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-05-24",
+      "createdAt": "2026-06-24T07:54:18.670Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
+      "id": "mqrs127ljm97t8",
+      "type": "expense",
+      "amount": 29.9,
+      "category": "餐饮",
+      "note": "大米",
+      "date": "2026-05-28",
+      "createdAt": "2026-06-24T07:53:36.369Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢"
+      ]
+    },
+    {
+      "id": "mqrs0mhjlilhga",
+      "type": "expense",
+      "amount": 65.69,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-05-28",
+      "createdAt": "2026-06-24T07:53:15.991Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
+      "id": "mqrrzeg3mzslww",
+      "type": "expense",
+      "amount": 72.45,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-01",
+      "createdAt": "2026-06-24T07:52:18.915Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
       "id": "mqrruu8wybr1qg",
       "type": "expense",
       "amount": 19.8,
@@ -214,7 +298,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T07:48:46.112Z",
+  "updatedAt": "2026-06-24T07:54:44.681Z",
   "members": [
     {
       "name": "龙",
