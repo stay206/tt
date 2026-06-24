@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, Filler } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
@@ -19,6 +19,7 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
   const { bookId = '' } = useParams<{ bookId: string }>();
   const [book, setBook] = useState<Book | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date().toISOString()));
+  const [selectedUser, setSelectedUser] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
@@ -78,8 +79,6 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
       };
     }).reverse(),
   ];
-
-  const [selectedUser, setSelectedUser] = useState<string>('all');
 
   const monthRecords = book.records.filter((r) => (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth));
 
