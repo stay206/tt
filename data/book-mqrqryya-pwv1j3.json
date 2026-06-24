@@ -6,6 +6,23 @@
   "records": [
     {
       "type": "expense",
+      "amount": 104.62,
+      "category": "餐饮",
+      "note": "冰棒",
+      "date": "2026-06-02",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ],
+      "id": "mqrr1s36x5lxkl",
+      "createdAt": "2026-06-24T07:26:10.290Z"
+    },
+    {
+      "type": "expense",
       "amount": 109.93,
       "category": "餐饮",
       "note": "",
@@ -118,7 +135,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T07:24:02.156Z",
+  "updatedAt": "2026-06-24T07:26:10.290Z",
   "members": [
     {
       "name": "龙",
