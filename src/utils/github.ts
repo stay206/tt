@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
@@ -418,4 +418,72 @@ export const deleteRecordFromBook = async (config: GitHubConfig, bookId: string,
   book.updatedAt = new Date().toISOString();
 
   return saveBook(config, book);
+};
+
+export const getLatestRelease = async (owner: string, repo: string): Promise<{ version: string; downloadUrl: string; body: string } | null> => {
+  try {
+    const response = await fetch(
+      `${GITHUB_API}/repos/${owner}/${repo}/releases/latest`,
+      { headers: { Accept: 'application/vnd.github+json' } }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const apkAsset = data.assets?.find((a: any) => a.name?.endsWith('.apk'));
+    
+    return {
+      version: data.tag_name?.replace(/^v/, '') || '',
+      downloadUrl: apkAsset?.browser_download_url || data.html_url || '',
+      body: data.body || '',
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const compareVersions = (current: string, latest: string): boolean => {
+  const currentParts = current.split('.').map(Number);
+  const latestParts = latest.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(currentParts.length, latestParts.length); i++) {
+    const cur = currentParts[i] || 0;
+    const lat = latestParts[i] || 0;
+    if (lat > cur) return true;
+    if (lat < cur) return false;
+  }
+  return false;
+};
+
+const simpleHash = (str: string): string => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0');
+};
+
+export const hashPassword = (password: string): string => {
+  const salt = 'bangumi_salt_2026';
+  return simpleHash(salt + password + salt);
+};
+
+export const verifyPassword = (password: string, hash: string): boolean => {
+  return hashPassword(password) === hash;
+};
+
+export const getBookPasswordVerified = (bookId: string): boolean => {
+  return localStorage.getItem(`book_password_verified_${bookId}`) === 'true';
+};
+
+export const setBookPasswordVerified = (bookId: string, verified: boolean): void => {
+  if (verified) {
+    localStorage.setItem(`book_password_verified_${bookId}`, 'true');
+  } else {
+    localStorage.removeItem(`book_password_verified_${bookId}`);
+  }
 };

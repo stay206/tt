@@ -1,10 +1,10 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X, Share2, Copy } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { AddRecordModal } from '@/components/AddRecordModal';
 import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
-import { getBook, saveBook } from '@/utils/github';
+import { getBook, saveBook, verifyPassword, getBookPasswordVerified, setBookPasswordVerified } from '@/utils/github';
 import { getMonthKey } from '@/utils/format';
 import { getCategoriesByType } from '@/data/categories';
 
@@ -81,6 +81,9 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitReminder, setShowSubmitReminder] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const loadBook = async () => {
     if (!bookId) {
@@ -95,11 +98,20 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         if (!b.members) b.members = [];
         setBook(b);
         localStorage.setItem(`current_book_cache_${bookId}`, JSON.stringify(b));
+
+        if (b.password && !getBookPasswordVerified(bookId)) {
+          setShowPasswordModal(true);
+        }
       } else {
         const cached = localStorage.getItem(`current_book_cache_${bookId}`);
         if (cached) {
-          setBook(JSON.parse(cached));
+          const cachedBook = JSON.parse(cached);
+          setBook(cachedBook);
           setError('网络错误，已显示缓存数据');
+
+          if (cachedBook.password && !getBookPasswordVerified(bookId)) {
+            setShowPasswordModal(true);
+          }
         } else {
           setError('账本不存在');
         }
@@ -107,8 +119,13 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     } catch (e: any) {
       const cached = localStorage.getItem(`current_book_cache_${bookId}`);
       if (cached) {
-        setBook(JSON.parse(cached));
+        const cachedBook = JSON.parse(cached);
+        setBook(cachedBook);
         setError('网络错误，已显示缓存数据');
+
+        if (cachedBook.password && !getBookPasswordVerified(bookId)) {
+          setShowPasswordModal(true);
+        }
       } else {
         setError(e.message || '加载失败');
       }
@@ -141,6 +158,24 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
   const triggerSubmitReminder = () => {
     setShowSubmitReminder(true);
+  };
+
+  const handlePasswordVerify = () => {
+    if (!book?.password) return;
+    
+    if (!passwordInput.trim()) {
+      setPasswordError('请输入密码');
+      return;
+    }
+
+    if (verifyPassword(passwordInput, book.password)) {
+      setBookPasswordVerified(bookId, true);
+      setShowPasswordModal(false);
+      setPasswordError('');
+      setPasswordInput('');
+    } else {
+      setPasswordError('密码不正确');
+    }
   };
 
   const handleRefresh = async () => {
@@ -902,6 +937,56 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                     复制
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="p-6 border-b border-gray-100">
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 text-center">账本已加密</h2>
+              <p className="text-sm text-gray-500 text-center mt-2">
+                请输入密码以访问账本「{book?.name}」
+              </p>
+            </div>
+            <div className="p-6 space-y-4">
+              {passwordError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm text-center">
+                  {passwordError}
+                </div>
+              )}
+              <div>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(''); }}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePasswordVerify()}
+                  placeholder="请输入密码"
+                  autoFocus
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-center text-lg"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate('/')}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                >
+                  返回
+                </button>
+                <button
+                  onClick={handlePasswordVerify}
+                  className="flex-1 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl font-semibold hover:shadow-lg"
+                >
+                  验证
+                </button>
               </div>
             </div>
           </div>

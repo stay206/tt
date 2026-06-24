@@ -1,8 +1,8 @@
-﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Check, Link, ChevronDown, PlusCircle } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
-import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData, getAllGitHubConfigs, addGitHubConfig, setCurrentConfigId, testConnection } from '@/utils/github';
+import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData, getAllGitHubConfigs, addGitHubConfig, setCurrentConfigId, testConnection, hashPassword, verifyPassword } from '@/utils/github';
 
 interface BooksPageProps {
   configs: GitHubConfig[];
@@ -672,26 +672,83 @@ const EditBookModal = ({ book, config, onClose, onSuccess }: { book: Book; confi
   const [icon, setIcon] = useState(book.icon);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const hasPassword = !!book.password;
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [removePassword, setRemovePassword] = useState(false);
 
   const handleSave = async () => {
     setSubmitting(true);
     setError('');
 
-    const updated: Book = {
-      ...book,
-      name: name.trim() || book.name,
-      description: description.trim(),
-      icon,
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      let passwordHash = book.password;
 
-    const result = await saveBook(config, updated);
-    setSubmitting(false);
+      if (showPasswordSection) {
+        if (hasPassword && !removePassword) {
+          if (!currentPassword) {
+            setError('请输入原密码');
+            setSubmitting(false);
+            return;
+          }
+          if (!verifyPassword(currentPassword, book.password!)) {
+            setError('原密码不正确');
+            setSubmitting(false);
+            return;
+          }
+        }
 
-    if (result.success) {
-      onSuccess();
-    } else {
-      setError(result.message || '保存失败');
+        if (removePassword) {
+          if (hasPassword) {
+            if (!currentPassword) {
+              setError('请输入原密码');
+              setSubmitting(false);
+              return;
+            }
+            if (!verifyPassword(currentPassword, book.password!)) {
+              setError('原密码不正确');
+              setSubmitting(false);
+              return;
+            }
+          }
+          passwordHash = undefined;
+        } else if (newPassword) {
+          if (newPassword.length < 4) {
+            setError('密码至少4位');
+            setSubmitting(false);
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            setError('两次输入的密码不一致');
+            setSubmitting(false);
+            return;
+          }
+          passwordHash = hashPassword(newPassword);
+        }
+      }
+
+      const updated: Book = {
+        ...book,
+        name: name.trim() || book.name,
+        description: description.trim(),
+        icon,
+        password: passwordHash,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const result = await saveBook(config, updated);
+      setSubmitting(false);
+
+      if (result.success) {
+        onSuccess();
+      } else {
+        setError(result.message || '保存失败');
+      }
+    } catch (e: any) {
+      setSubmitting(false);
+      setError(e.message || '保存失败');
     }
   };
 
@@ -743,6 +800,93 @@ const EditBookModal = ({ book, config, onClose, onSuccess }: { book: Book; confi
               ))}
             </div>
           </div>
+
+          <div className="pt-2 border-t border-gray-100">
+            {!showPasswordSection ? (
+              <button
+                type="button"
+                onClick={() => setShowPasswordSection(true)}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                {hasPassword ? '修改密码' : '设置密码（可选）'}
+              </button>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">密码设置</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordSection(false);
+                      setCurrentPassword('');
+                      setNewPassword('');
+                      setConfirmPassword('');
+                      setRemovePassword(false);
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    取消
+                  </button>
+                </div>
+
+                {hasPassword && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">原密码</label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="请输入原密码"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                )}
+
+                {!removePassword && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {hasPassword ? '新密码' : '密码'}
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="至少4位字符"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">确认密码</label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="再次输入密码"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {hasPassword && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="removePassword"
+                      checked={removePassword}
+                      onChange={(e) => setRemovePassword(e.target.checked)}
+                      className="w-4 h-4 text-primary-600 rounded"
+                    />
+                    <label htmlFor="removePassword" className="text-sm text-gray-600">
+                      移除密码保护
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleSave}
             disabled={submitting}

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿export interface Record {
+﻿﻿﻿﻿﻿﻿﻿export interface Record {
   id: string;
   type: 'income' | 'expense';
   amount: number;
@@ -31,6 +31,7 @@ export interface Book {
   icon: string;
   records: Record[];
   members: BookMember[]; // 账本成员列表
+  password?: string; // 账本密码（哈希后）
   createdAt: string;
   updatedAt: string;
 }
