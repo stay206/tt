@@ -1,6 +1,6 @@
-﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Share2, Copy, Check } from 'lucide-react';
+import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Share2, Copy, Check, Link } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
 import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData } from '@/utils/github';
 
@@ -21,6 +21,8 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [message, setMessage] = useState('');
   const [showShare, setShowShare] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
 
   const loadIndex = async () => {
     setLoading(true);
@@ -65,6 +67,41 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
     setTimeout(() => setMessage(''), 3000);
   };
 
+  const handleJoinInvite = () => {
+    if (!inviteLink.trim()) {
+      setError('请输入邀请链接');
+      return;
+    }
+
+    try {
+      const url = new URL(inviteLink);
+      const hashParams = new URLSearchParams(url.hash.substring(1));
+      const queryParams = url.searchParams;
+
+      const owner = hashParams.get('owner') || queryParams.get('owner');
+      const repo = hashParams.get('repo') || queryParams.get('repo');
+      const token = hashParams.get('token') || queryParams.get('token');
+      const branch = hashParams.get('branch') || queryParams.get('branch') || 'main';
+
+      if (!owner || !repo) {
+        setError('邀请链接格式不正确');
+        return;
+      }
+
+      const newConfig: GitHubConfig = {
+        owner,
+        repo,
+        token: token || '',
+        branch,
+      };
+
+      localStorage.setItem('expense_tracker_github_config', JSON.stringify(newConfig));
+      window.location.reload();
+    } catch {
+      setError('邀请链接格式不正确');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40">
@@ -100,6 +137,14 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
               <Github className="w-4 h-4 text-gray-500" />
               <span className="text-gray-600">{deviceName}</span>
             </div>
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-xl text-sm font-medium"
+              title="填写邀请链接"
+            >
+              <Link className="w-4 h-4" />
+              邀请链接
+            </button>
             <button
               onClick={onConfigChange}
               className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl"
@@ -261,6 +306,58 @@ export const BooksPage = ({ config, deviceName, onConfigChange }: BooksPageProps
 
       {showShare && (
         <ShareModal config={config} onClose={() => setShowShare(false)} />
+      )}
+
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Link className="w-5 h-5 text-amber-500" />
+                <h2 className="text-xl font-bold text-gray-800">填写邀请链接</h2>
+              </div>
+              <button onClick={() => setShowInviteModal(false)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
+                <p className="font-medium mb-2">使用方法</p>
+                <ol className="list-decimal list-inside space-y-1 text-xs">
+                  <li>获取邀请人分享的链接</li>
+                  <li>粘贴到下方输入框</li>
+                  <li>点击加入按钮即可进入对方的账本</li>
+                </ol>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">邀请链接</label>
+                <textarea
+                  value={inviteLink}
+                  onChange={(e) => { setInviteLink(e.target.value); setError(''); }}
+                  placeholder="粘贴邀请链接到这里..."
+                  rows={3}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none font-mono text-sm"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleJoinInvite}
+                  className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold hover:shadow-lg"
+                >
+                  加入账本
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
