@@ -1,4 +1,4 @@
-﻿﻿﻿export interface Record {
+﻿﻿﻿﻿﻿export interface Record {
   id: string;
   type: 'income' | 'expense';
   amount: number;
