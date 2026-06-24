@@ -3,9 +3,24 @@
   "name": "账本",
   "description": "",
   "icon": "📕",
-  "records": [],
+  "records": [
+    {
+      "id": "mqrkdv161n6fco",
+      "type": "expense",
+      "amount": 1,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-24",
+      "createdBy": "双",
+      "createdAt": "2026-06-24T04:19:36.666Z",
+      "payer": "双",
+      "participants": [
+        "双"
+      ]
+    }
+  ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T03:13:57.791Z",
+  "updatedAt": "2026-06-24T04:19:36.666Z",
   "members": [
     {
       "name": "龙",
