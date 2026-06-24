@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -339,7 +339,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
   const filteredRecords = book.records.filter((record) => {
     const matchesMonth = selectedMonth === 'all' || getMonthKey(record.date) === selectedMonth;
-    const matchesUser = !record.participants || record.participants.includes(currentUser);
+    const matchesUser = !record.participants || record.participants.includes(currentUser) || record.payer === currentUser;
     const matchesSearch =
       record.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       record.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
