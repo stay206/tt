@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -34,11 +34,11 @@ const calculateBalances = (records: BookRecord[], members: BookMember[]) => {
     const payerIndex = record.participants.indexOf(record.payer || '');
     record.participants.forEach((p, idx) => {
       if (idx !== payerIndex && balances[p] !== undefined) {
-        balances[p] += perPerson;
+        balances[p] -= perPerson;
       }
     });
     if (record.payer && balances[record.payer] !== undefined) {
-      balances[record.payer] -= record.amount;
+      balances[record.payer] += record.amount;
     }
   });
 
@@ -51,7 +51,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date().toISOString()));
+  const [selectedMonth, setSelectedMonth] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<BookRecord | null>(null);
   const [showMembers, setShowMembers] = useState(false);
