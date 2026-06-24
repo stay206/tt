@@ -2,7 +2,7 @@
   "id": "book-mqqti1vn",
   "name": "账本",
   "description": "",
-  "icon": "?",
+  "icon": "📕",
   "records": [
     {
       "id": "mqrd80lbtiglbe",
@@ -19,6 +19,24 @@
         "宏",
         "卢",
         "龙"
+      ]
+    },
+    {
+      "id": "mqqvt8nytj2u2t",
+      "type": "expense",
+      "amount": 100,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-23",
+      "createdBy": "双",
+      "createdAt": "2026-06-23T16:51:43.774Z",
+      "payer": "双",
+      "participants": [
+        "用户zm3b",
+        "龙",
+        "卢",
+        "宏",
+        "双"
       ]
     }
   ],
