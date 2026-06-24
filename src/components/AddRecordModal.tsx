@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { X, Users, User } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
 import { Book, Record as BookRecord, GitHubConfig } from '@/types';
@@ -59,8 +59,6 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
 
   const handleParticipantToggle = (name: string) => {
     if (participants.includes(name)) {
-      // 不能取消付款人
-      if (name === payer) return;
       setParticipants(participants.filter(p => p !== name));
     } else {
       setParticipants([...participants, name]);
@@ -69,10 +67,6 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
 
   const handlePayerChange = (name: string) => {
     setPayer(name);
-    // 付款人自动加入参与成员
-    if (!participants.includes(name)) {
-      setParticipants([...participants, name]);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -267,7 +261,8 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
                       } ${m.name === payer ? 'ring-2 ring-primary-300' : ''}`}
                     >
                       {m.name}
-                      {m.name === payer && ' (付款)'}
+                      {m.name === payer && participants.includes(m.name) && ' (付款)'}
+                      {m.name === payer && !participants.includes(m.name) && ' (代付)'}
                     </button>
                   ))}
                 </div>

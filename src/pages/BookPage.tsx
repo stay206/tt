@@ -1,10 +1,10 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { AddRecordModal } from '@/components/AddRecordModal';
 import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
-import { getBook, saveBook, deleteRecordFromBook, addRecordToBook } from '@/utils/github';
+import { getBook, saveBook, addRecordToBook } from '@/utils/github';
 import { getMonthKey } from '@/utils/format';
 import { getCategoriesByType } from '@/data/categories';
 
@@ -149,10 +149,10 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       return;
     }
 
-    const newMember = { name: newMemberName.trim(), addedAt: new Date().toISOString() };
+    const newMemberNameTrimmed = newMemberName.trim();
     const updatedBook: Book = {
       ...book,
-      members: [...book.members, newMember],
+      members: [...book.members, { name: newMemberNameTrimmed, addedAt: new Date().toISOString() }],
       updatedAt: new Date().toISOString(),
     };
 
@@ -163,7 +163,27 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setPendingOperations(prev => prev + 1);
     setShowSyncToast(true);
 
-    const result = await saveBook(config, updatedBook);
+    const latestBook = await getBook(config, bookId);
+    if (!latestBook) {
+      setBook(book);
+      setError('账本不存在');
+      setPendingOperations(prev => prev - 1);
+      return;
+    }
+
+    if (latestBook.members.some(m => m.name === newMemberNameTrimmed)) {
+      setError('成员已存在');
+      setPendingOperations(prev => prev - 1);
+      return;
+    }
+
+    const finalBook: Book = {
+      ...latestBook,
+      members: [...latestBook.members, { name: newMemberNameTrimmed, addedAt: new Date().toISOString() }],
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await saveBook(config, finalBook);
     if (!result.success) {
       setBook(book);
       setError(result.message || '添加失败');
@@ -186,7 +206,21 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setPendingOperations(prev => prev + 1);
     setShowSyncToast(true);
 
-    const result = await saveBook(config, updatedBook);
+    const latestBook = await getBook(config, bookId);
+    if (!latestBook) {
+      setBook(book);
+      setError('账本不存在');
+      setPendingOperations(prev => prev - 1);
+      return;
+    }
+
+    const finalBook: Book = {
+      ...latestBook,
+      members: latestBook.members.filter(m => m.name !== name),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await saveBook(config, finalBook);
     if (!result.success) {
       setBook(book);
       setError(result.message || '删除失败');
@@ -214,7 +248,21 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setPendingOperations(prev => prev + 1);
     setShowSyncToast(true);
 
-    const result = await deleteRecordFromBook(config, bookId, recordId);
+    const latestBook = await getBook(config, bookId);
+    if (!latestBook) {
+      setBook(book);
+      setError('账本不存在');
+      setPendingOperations(prev => prev - 1);
+      return;
+    }
+
+    const finalBook: Book = {
+      ...latestBook,
+      records: latestBook.records.filter(r => r.id !== recordId),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await saveBook(config, finalBook);
     if (!result.success) {
       setBook(book);
       setError(result.message || '删除失败');
