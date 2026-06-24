@@ -7,7 +7,7 @@ import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
 import { getBook } from '@/utils/github';
 import { getMonthKey } from '@/utils/format';
 import { getCategoriesByType } from '@/data/categories';
-import { applyQueueToBook, syncQueue, getSyncStatus, addToQueue } from '@/utils/offlineQueue';
+import { applyQueueToBook, syncQueue, getSyncStatus, addToQueue, startAutoSync, stopAutoSync } from '@/utils/offlineQueue';
 
 interface BookPageProps {
   config: GitHubConfig;
@@ -104,6 +104,25 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
   useEffect(() => {
     loadBook();
+
+    startAutoSync(
+      config,
+      () => {
+        loadBook();
+      },
+      (err) => {
+        setError(err);
+      }
+    );
+
+    const refreshTimer = setInterval(() => {
+      loadBook();
+    }, 15000);
+
+    return () => {
+      stopAutoSync();
+      clearInterval(refreshTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId]);
 
