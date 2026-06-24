@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -79,6 +79,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showSubmitReminder, setShowSubmitReminder] = useState(false);
 
   const loadBook = async () => {
     if (!bookId) {
@@ -127,6 +128,19 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       return () => clearTimeout(timer);
     }
   }, [showSyncToast]);
+
+  useEffect(() => {
+    if (showSubmitReminder) {
+      const timer = setTimeout(() => {
+        setShowSubmitReminder(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSubmitReminder]);
+
+  const triggerSubmitReminder = () => {
+    setShowSubmitReminder(true);
+  };
 
   const handleRefresh = async () => {
     if (hasLocalChanges && !window.confirm('有未提交的修改，刷新将丢失这些更改，确定要刷新吗？')) {
@@ -180,6 +194,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setShowMembers(false);
     setError('');
     setHasLocalChanges(true);
+    triggerSubmitReminder();
   };
 
   const handleDeleteMember = (name: string) => {
@@ -195,6 +210,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setBook(updatedBook);
     setError('');
     setHasLocalChanges(true);
+    triggerSubmitReminder();
   };
 
   const handleEditRecord = (record: BookRecord) => {
@@ -215,6 +231,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setBook(updatedBook);
     setError('');
     setHasLocalChanges(true);
+    triggerSubmitReminder();
   };
 
   const handleSelectIdentity = (name: string) => {
@@ -568,6 +585,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
           setHasLocalChanges(true);
           setIsModalOpen(false);
           setEditRecord(null);
+          triggerSubmitReminder();
         }}
         deviceName={currentUser}
         book={book}
@@ -726,6 +744,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                   setSelectedSettleUsers([]);
                   setSettleAmounts({});
                   setHasLocalChanges(true);
+                  triggerSubmitReminder();
                 }}
                 disabled={selectedSettleUsers.length === 0}
                 className="w-full py-3 rounded-xl font-semibold transition-colors bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -745,6 +764,17 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <span className="text-sm font-medium">⏳ 提交中，工作流更新需要等待 1-2 分钟</span>
+          </div>
+        </div>
+      )}
+
+      {showSubmitReminder && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-bounce">
+          <div className="flex items-center gap-2 px-4 py-3 bg-primary-500 text-white rounded-full shadow-lg">
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium">💡 请记得在右上角提交修改</span>
           </div>
         </div>
       )}
