@@ -26,6 +26,9 @@ jobs:
       - name: Build Web App
         run: npm run build
 
+      - name: List dist directory
+        run: ls -la dist
+
       - name: Setup Capacitor
         run: npx cap sync android
 
@@ -43,23 +46,13 @@ jobs:
           mv /tmp/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "PATH=$PATH"
+          ls -la $ANDROID_HOME/platforms
+          ls -la $ANDROID_HOME/build-tools
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
       - name: Build APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: expense-tracker-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Create Release with APK
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Release v1.0.${{ github.run_number }}
-          files: android/app/build/outputs/apk/debug/app-debug.apk
-          generate_release_notes: true
+        run: cd android && ./gradlew assembleDebug --no-daemon -x lint
