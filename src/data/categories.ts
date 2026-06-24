@@ -1,4 +1,4 @@
-﻿﻿﻿﻿import { Category } from '@/types';
+﻿﻿﻿﻿﻿import { Category } from '@/types';
 
 export const defaultCategories: Category[] = [
   { id: '1', name: '餐饮', type: 'expense', icon: '🍔', color: '#ef4444' },
@@ -13,7 +13,8 @@ export const defaultCategories: Category[] = [
   { id: '10', name: '奖金', type: 'income', icon: '🎁', color: '#eab308' },
   { id: '11', name: '投资', type: 'income', icon: '📈', color: '#84cc16' },
   { id: '12', name: '兼职', type: 'income', icon: '💼', color: '#0ea5e9' },
-  { id: '13', name: '其他', type: 'income', icon: '💵', color: '#f97316' },
+  { id: '13', name: '结余', type: 'income', icon: '💳', color: '#22c55e' },
+  { id: '14', name: '其他', type: 'income', icon: '💵', color: '#f97316' },
 ];
 
 export const getCategoriesByType = (type: 'income' | 'expense'): Category[] => {
