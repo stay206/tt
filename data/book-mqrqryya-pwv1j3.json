@@ -6,6 +6,23 @@
   "records": [
     {
       "type": "expense",
+      "amount": 109.93,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-07",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ],
+      "id": "mqrqz17wlvmti9",
+      "createdAt": "2026-06-24T07:24:02.156Z"
+    },
+    {
+      "type": "expense",
       "amount": 7.8,
       "category": "餐饮",
       "note": "鸡腿堡",
@@ -101,7 +118,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T07:22:16.017Z",
+  "updatedAt": "2026-06-24T07:24:02.156Z",
   "members": [
     {
       "name": "龙",
