@@ -6,21 +6,6 @@
   "records": [
     {
       "type": "income",
-      "amount": 30,
-      "category": "结余",
-      "note": "双 结算给 龙",
-      "date": "2026-06-24",
-      "createdBy": "双",
-      "payer": "双",
-      "participants": [
-        "龙",
-        "双"
-      ],
-      "id": "mqron6dspmsead",
-      "createdAt": "2026-06-24T06:18:49.744Z"
-    },
-    {
-      "type": "income",
       "amount": 60,
       "category": "其他",
       "note": "龙 结算给 双",
@@ -128,7 +113,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T06:18:49.744Z",
+  "updatedAt": "2026-06-24T06:32:34.189Z",
   "members": [
     {
       "name": "龙",
