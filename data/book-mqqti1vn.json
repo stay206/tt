@@ -5,6 +5,20 @@
   "icon": "📕",
   "records": [
     {
+      "id": "mqrfmwfejyqrly",
+      "type": "expense",
+      "amount": 10,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-24",
+      "createdBy": "双",
+      "createdAt": "2026-06-24T02:06:40.298Z",
+      "payer": "双",
+      "participants": [
+        "双"
+      ]
+    },
+    {
       "id": "mqrd80lbtiglbe",
       "type": "expense",
       "amount": 100,
@@ -23,7 +37,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T01:49:00.688Z",
+  "updatedAt": "2026-06-24T02:06:40.298Z",
   "members": [
     {
       "name": "龙",
