@@ -3,13 +3,135 @@
   "name": "账本",
   "description": "",
   "icon": "📕",
-  "records": [],
-  "members": [
+  "records": [
     {
-      "name": "双",
-      "addedAt": "2026-06-24T07:18:32.626Z"
+      "type": "expense",
+      "amount": 7.8,
+      "category": "餐饮",
+      "note": "鸡腿堡",
+      "date": "2026-06-24",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "宏"
+      ],
+      "id": "mqrqi5ebondrwz",
+      "createdAt": "2026-06-24T07:10:54.419Z"
+    },
+    {
+      "type": "expense",
+      "amount": 7.8,
+      "category": "餐饮",
+      "note": "鸡腿堡",
+      "date": "2026-06-10",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "宏"
+      ],
+      "id": "mqrqb9moxtbn41",
+      "createdAt": "2026-06-24T07:05:33.313Z"
+    },
+    {
+      "type": "expense",
+      "amount": 88.77,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-10",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ],
+      "id": "mqrq9aemnf9n1i",
+      "createdAt": "2026-06-24T07:04:01.006Z"
+    },
+    {
+      "type": "expense",
+      "amount": 143.2,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-11",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "宏",
+        "卢",
+        "龙",
+        "双"
+      ],
+      "id": "mqrq8872afwynw",
+      "createdAt": "2026-06-24T07:03:11.486Z"
+    },
+    {
+      "type": "expense",
+      "amount": 73.51,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-15",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ],
+      "id": "mqrptwitrcpxhc",
+      "createdAt": "2026-06-24T06:52:03.173Z"
+    },
+    {
+      "type": "expense",
+      "amount": 42.52,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-23",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "卢",
+        "龙"
+      ],
+      "id": "mqrpsyqrsyuhra",
+      "createdAt": "2026-06-24T06:51:19.395Z"
+    },
+    {
+      "id": "mqrn4bhkpwkiqs",
+      "type": "expense",
+      "amount": 1,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-06-24",
+      "createdBy": "卢",
+      "createdAt": "2026-06-24T05:36:10.280Z",
+      "payer": "卢",
+      "participants": [
+        "卢"
+      ]
     }
   ],
-  "createdAt": "2026-06-24T07:18:32.626Z",
-  "updatedAt": "2026-06-24T07:18:32.626Z"
+  "createdAt": "2026-06-23T15:47:02.531Z",
+  "updatedAt": "2026-06-24T07:10:54.419Z",
+  "members": [
+    {
+      "name": "龙",
+      "addedAt": "2026-06-23T17:13:51.231Z"
+    },
+    {
+      "name": "卢",
+      "addedAt": "2026-06-23T17:41:10.444Z"
+    },
+    {
+      "name": "宏",
+      "addedAt": "2026-06-23T17:46:55.954Z"
+    },
+    {
+      "name": "双",
+      "addedAt": "2026-06-23T17:48:31.363Z"
+    }
+  ]
 }
