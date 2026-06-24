@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -483,9 +483,21 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`text-lg font-bold ${record.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'}`}>
-                        {record.type === 'expense' ? '-' : '+'}¥{record.amount.toFixed(2)}
-                      </div>
+                      {(() => {
+                        if (record.category === '结余') {
+                          const isPayer = record.payer === currentUser;
+                          return (
+                            <div className={`text-lg font-bold ${isPayer ? 'text-rose-500' : 'text-emerald-500'}`}>
+                              {isPayer ? '-' : '+'}¥{record.amount.toFixed(2)}
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className={`text-lg font-bold ${record.type === 'expense' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                            {record.type === 'expense' ? '-' : '+'}¥{record.amount.toFixed(2)}
+                          </div>
+                        );
+                      })()}
                       <button onClick={() => handleEditRecord(record)} className="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
                         <Edit2 className="w-4 h-4" />
                       </button>
