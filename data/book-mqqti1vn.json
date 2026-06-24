@@ -1,6 +1,6 @@
 {
   "id": "book-mqqti1vn",
-  "name": "ÕË±¾",
+  "name": "è´¦æœ¬",
   "description": "",
   "icon": "?",
   "records": [
@@ -8,55 +8,37 @@
       "id": "mqrd80lbtiglbe",
       "type": "expense",
       "amount": 100,
-      "category": "²ÍÒû",
+      "category": "é¤é¥®",
       "note": "",
       "date": "2026-06-24",
-      "createdBy": "Ë«",
+      "createdBy": "åŒ",
       "createdAt": "2026-06-24T00:59:06.623Z",
-      "payer": "Ë«",
+      "payer": "åŒ",
       "participants": [
-        "Ë«",
-        "ºê",
-        "Â¬",
-        "Áú"
-      ]
-    },
-    {
-      "id": "mqqvt8nytj2u2t",
-      "type": "expense",
-      "amount": 100,
-      "category": "²ÍÒû",
-      "note": "",
-      "date": "2026-06-23",
-      "createdBy": "Ë«",
-      "createdAt": "2026-06-23T16:51:43.774Z",
-      "payer": "Ë«",
-      "participants": [
-        "ÓÃ»§zm3b",
-        "Áú",
-        "Â¬",
-        "ºê",
-        "Ë«"
+        "åŒ",
+        "å®",
+        "å¢",
+        "é¾™"
       ]
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T00:59:06.623Z",
+  "updatedAt": "2026-06-24T01:27:43.806Z",
   "members": [
     {
-      "name": "Áú",
+      "name": "é¾™",
       "addedAt": "2026-06-23T17:13:51.231Z"
     },
     {
-      "name": "Â¬",
+      "name": "å¢",
       "addedAt": "2026-06-23T17:41:10.444Z"
     },
     {
-      "name": "ºê",
+      "name": "å®",
       "addedAt": "2026-06-23T17:46:55.954Z"
     },
     {
-      "name": "Ë«",
+      "name": "åŒ",
       "addedAt": "2026-06-23T17:48:31.363Z"
     }
   ]
