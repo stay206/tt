@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';

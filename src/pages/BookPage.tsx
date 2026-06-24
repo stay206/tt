@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -352,6 +352,30 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     });
   });
 
+  // 按方案分组结算建议（当前用户视角）
+  const mySettlementPlans: { title: string; items: { from: string; to: string; amount: number }[] }[] = [];
+  const myRelatedSettlements = settlements.filter(s => s.from === currentUser || s.to === currentUser);
+  
+  if (myBalance > 0) {
+    // 当前用户应收钱，每个应付给他的人是一个方案
+    const payers = myRelatedSettlements.filter(s => s.to === currentUser);
+    payers.forEach((s, idx) => {
+      mySettlementPlans.push({
+        title: `方案${idx + 1}`,
+        items: [{ from: s.from, to: currentUser, amount: s.amount }]
+      });
+    });
+  } else if (myBalance < 0) {
+    // 当前用户应付钱，每个应收的人是一个方案
+    const receivers = myRelatedSettlements.filter(s => s.from === currentUser);
+    receivers.forEach((s, idx) => {
+      mySettlementPlans.push({
+        title: `方案${idx + 1}`,
+        items: [{ from: currentUser, to: s.to, amount: s.amount }]
+      });
+    });
+  }
+
   const months = [
     { key: 'all', label: '全部账单' },
     ...Array.from({ length: 12 }, (_, i) => {
@@ -494,12 +518,19 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
                 <p className="text-sm text-gray-500 mb-2">结算建议</p>
-                {settlements.filter(s => s.from === currentUser || s.to === currentUser).length > 0 ? (
-                  <div className="space-y-1">
-                    {settlements.filter(s => s.from === currentUser || s.to === currentUser).map((s, i) => (
-                      <p key={i} className="text-sm">
-                        {s.from === currentUser ? `应支付给 ${s.to}：¥${s.amount.toFixed(2)}` : `${s.from} 应支付给你：¥${s.amount.toFixed(2)}`}
-                      </p>
+                {mySettlementPlans.length > 0 ? (
+                  <div className="space-y-3">
+                    {mySettlementPlans.map((plan, i) => (
+                      <div key={i} className="border-b border-gray-200 pb-2 last:border-b-0 last:pb-0">
+                        <p className="text-xs text-gray-400 mb-1">{plan.title}：</p>
+                        {plan.items.map((item, j) => (
+                          <p key={j} className="text-sm text-gray-700">
+                            {item.from === currentUser 
+                              ? `应支付给 ${item.to}：¥${item.amount.toFixed(2)}` 
+                              : `${item.from} 应支付给你：¥${item.amount.toFixed(2)}`}
+                          </p>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ) : (

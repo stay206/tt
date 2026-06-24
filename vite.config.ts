@@ -9,6 +9,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  base: '/tt/',
+  base: '',
   build: {},
 })
