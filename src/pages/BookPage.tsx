@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -78,6 +78,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [showSyncToast, setShowSyncToast] = useState(false);
   const [settling, setSettling] = useState(false);
   const [pendingOperations, setPendingOperations] = useState<number>(0);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const loadBook = async () => {
     if (!bookId) {
@@ -344,6 +345,10 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       record.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
       record.createdBy.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesMonth && matchesUser && matchesSearch;
+  }).sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   });
 
   // 本月总支出
@@ -449,6 +454,15 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                 className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+              className="flex items-center gap-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-gray-600">{sortOrder === 'desc' ? '最新' : '最早'}</span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
             <div className="relative">
               <select
                 value={selectedMonth}
