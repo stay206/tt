@@ -5,6 +5,23 @@
   "icon": "📕",
   "records": [
     {
+      "id": "mqrm034kilv40u",
+      "type": "expense",
+      "amount": 100,
+      "category": "餐饮",
+      "note": "测试",
+      "date": "2026-06-24",
+      "createdBy": "双",
+      "createdAt": "2026-06-24T05:04:53.204Z",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
       "id": "mqrlzm5tauv1f4",
       "type": "expense",
       "amount": 100,
@@ -23,7 +40,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T05:04:31.218Z",
+  "updatedAt": "2026-06-24T05:04:53.204Z",
   "members": [
     {
       "name": "龙",
