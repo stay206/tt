@@ -1,21 +1,20 @@
 ﻿﻿import { useState, useEffect } from 'react';
 import { X, Users, User } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
-import { GitHubConfig, Book, Record as BookRecord } from '@/types';
-import { addRecordToBook, saveBook } from '@/utils/github';
+import { Book, Record as BookRecord } from '@/types';
+import { addToQueue } from '@/utils/offlineQueue';
 
 interface AddRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: () => void;
-  config: GitHubConfig;
   bookId: string;
   deviceName: string;
   book: Book | null;
   editRecord?: BookRecord | null;
 }
 
-export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceName, book, editRecord }: AddRecordModalProps) => {
+export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, book, editRecord }: AddRecordModalProps) => {
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -81,7 +80,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
     setError('');
 
     if (editRecord) {
-      // 编辑模式
+      // 编辑模式 - 添加到本地队列
       const updatedRecord: BookRecord = {
         ...editRecord,
         type,
@@ -93,50 +92,46 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, config, bookId, deviceN
         participants,
       };
 
-      const updatedBook = book!;
-      const idx = updatedBook.records.findIndex(r => r.id === editRecord.id);
-      if (idx !== -1) {
-        updatedBook.records[idx] = updatedRecord;
-        updatedBook.updatedAt = new Date().toISOString();
-      }
+      addToQueue({
+        type: 'edit_record',
+        bookId,
+        data: updatedRecord,
+      });
 
-      const result = await saveBook(config, updatedBook);
       setSubmitting(false);
-
-      if (result.success) {
-        onClose();
-        onAdd();
-      } else {
-        setError(result.message || '保存失败');
-      }
+      onClose();
+      onAdd();
     } else {
-      // 新增模式
-      const result = await addRecordToBook(config, bookId, {
+      // 新增模式 - 添加到本地队列
+      const newRecord: BookRecord = {
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 6),
         type,
         amount: parseFloat(amount),
         category,
         note,
         date,
         createdBy: deviceName,
+        createdAt: new Date().toISOString(),
         payer,
         participants,
+      };
+
+      addToQueue({
+        type: 'add_record',
+        bookId,
+        data: newRecord,
       });
 
       setSubmitting(false);
-
-      if (result.success) {
-        setType('expense');
-        setAmount('');
-        setCategory('');
-        setNote('');
-        setDate(new Date().toISOString().split('T')[0]);
-        setPayer(deviceName);
-        setParticipants([deviceName]);
-        onClose();
-        onAdd();
-      } else {
-        setError(result.message || '保存失败');
-      }
+      setType('expense');
+      setAmount('');
+      setCategory('');
+      setNote('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setPayer(deviceName);
+      setParticipants([deviceName]);
+      onClose();
+      onAdd();
     }
   };
 

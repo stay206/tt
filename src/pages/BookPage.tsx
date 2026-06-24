@@ -1,12 +1,13 @@
 ﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2 } from 'lucide-react';
+import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2 } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { AddRecordModal } from '@/components/AddRecordModal';
 import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
-import { getBook, saveBook } from '@/utils/github';
+import { getBook } from '@/utils/github';
 import { getMonthKey } from '@/utils/format';
 import { getCategoriesByType } from '@/data/categories';
+import { applyQueueToBook, syncQueue, getSyncStatus, addToQueue } from '@/utils/offlineQueue';
 
 interface BookPageProps {
   config: GitHubConfig;
@@ -51,6 +52,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [syncing, setSyncing] = useState(false);
   const [showIdentitySelect, setShowIdentitySelect] = useState(false);
   const [currentUser, setCurrentUser] = useState<string>(deviceName);
+  const [pendingCount, setPendingCount] = useState(0);
 
   // 检查并设置当前用户身份
   useEffect(() => {
@@ -72,10 +74,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setLoading(true);
     setError('');
     try {
-      const b = await getBook(config, bookId);
+      let b = await getBook(config, bookId);
       if (b) {
         // 确保 members 字段存在
         if (!b.members) b.members = [];
+        // 应用本地队列中的操作
+        b = applyQueueToBook(b);
         setBook(b);
         localStorage.setItem(`current_book_cache_${bookId}`, JSON.stringify(b));
       } else {
@@ -84,12 +88,17 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     } catch (e: any) {
       const cached = localStorage.getItem(`current_book_cache_${bookId}`);
       if (cached) {
-        setBook(JSON.parse(cached));
+        let b = JSON.parse(cached);
+        b = applyQueueToBook(b);
+        setBook(b);
         setError('网络错误，已显示缓存数据');
       } else {
         setError(e.message || '加载失败');
       }
     }
+    // 更新待同步数量
+    const status = getSyncStatus();
+    setPendingCount(status.pendingCount);
     setLoading(false);
   };
 
@@ -104,6 +113,22 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setSyncing(false);
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    setError('');
+    try {
+      const result = await syncQueue(config);
+      if (result.success) {
+        await loadBook();
+      } else {
+        setError(result.message || '同步失败');
+      }
+    } catch (e: any) {
+      setError(e.message || '同步失败');
+    }
+    setSyncing(false);
+  };
+
   const handleAddMember = async () => {
     if (!book || !newMemberName.trim()) return;
     const exists = book.members.some(m => m.name === newMemberName.trim());
@@ -112,43 +137,79 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       return;
     }
 
+    // 添加到本地队列
+    addToQueue({
+      type: 'add_member',
+      bookId,
+      data: { name: newMemberName.trim(), addedAt: new Date().toISOString() },
+    });
+
+    // 更新本地显示
     const updatedBook: Book = {
       ...book,
       members: [...book.members, { name: newMemberName.trim(), addedAt: new Date().toISOString() }],
       updatedAt: new Date().toISOString(),
     };
+    setBook(updatedBook);
+    setNewMemberName('');
+    setShowMembers(false);
 
-    const result = await saveBook(config, updatedBook);
-    if (result.success) {
-      setBook(updatedBook);
-      setNewMemberName('');
-      setShowMembers(false);
-    } else {
-      setError(result.message || '添加失败');
-    }
+    // 更新待同步数量
+    const status = getSyncStatus();
+    setPendingCount(status.pendingCount);
   };
 
   const handleDeleteMember = async (name: string) => {
     if (!book) return;
     if (!window.confirm(`确定要删除成员「${name}」吗？`)) return;
 
+    // 添加到本地队列
+    addToQueue({
+      type: 'delete_member',
+      bookId,
+      data: { name },
+    });
+
+    // 更新本地显示
     const updatedBook: Book = {
       ...book,
       members: book.members.filter(m => m.name !== name),
       updatedAt: new Date().toISOString(),
     };
+    setBook(updatedBook);
 
-    const result = await saveBook(config, updatedBook);
-    if (result.success) {
-      setBook(updatedBook);
-    } else {
-      setError(result.message || '删除失败');
-    }
+    // 更新待同步数量
+    const status = getSyncStatus();
+    setPendingCount(status.pendingCount);
   };
 
   const handleEditRecord = (record: BookRecord) => {
     setEditRecord(record);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteRecord = (recordId: string) => {
+    if (!book) return;
+    if (!window.confirm('确定要删除这条记录吗？')) return;
+
+    // 添加到本地队列
+    addToQueue({
+      type: 'delete_record',
+      bookId,
+      data: { recordId },
+    });
+
+    // 更新本地显示
+    const updatedBook: Book = {
+      ...book,
+      records: book.records.filter(r => r.id !== recordId),
+      updatedAt: new Date().toISOString(),
+    };
+    setBook(updatedBook);
+
+    // 更新待同步数量
+    const status = getSyncStatus();
+    setPendingCount(status.pendingCount);
   };
 
   const handleSelectIdentity = (name: string) => {
@@ -290,6 +351,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {pendingCount > 0 && (
+              <button onClick={handleSync} disabled={syncing} className="flex items-center gap-1 px-3 py-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition-colors" title="同步待提交数据">
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                <span className="text-sm font-medium">{pendingCount} 待同步</span>
+              </button>
+            )}
             <button onClick={() => setShowMembers(true)} className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl" title="成员管理">
               <Users className="w-5 h-5" />
             </button>
@@ -417,6 +484,9 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                       <button onClick={() => handleEditRecord(record)} className="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
                         <Edit2 className="w-4 h-4" />
                       </button>
+                      <button onClick={() => handleDeleteRecord(record.id)} className="p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -435,7 +505,6 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditRecord(null); }}
         onAdd={loadBook}
-        config={config}
         bookId={bookId}
         deviceName={currentUser}
         book={book}
