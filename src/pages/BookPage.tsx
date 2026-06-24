@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -76,6 +76,8 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [selectedSettleUsers, setSelectedSettleUsers] = useState<string[]>([]);
   const [settleAmounts, setSettleAmounts] = useState<Record<string, string>>({});
+  const [showSyncToast, setShowSyncToast] = useState(false);
+  const [settling, setSettling] = useState(false);
 
   const loadBook = async () => {
     if (!bookId) {
@@ -116,6 +118,15 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId]);
 
+  useEffect(() => {
+    if (showSyncToast) {
+      const timer = setTimeout(() => {
+        setShowSyncToast(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSyncToast]);
+
   const handleRefresh = async () => {
     setSyncing(true);
     await loadBook();
@@ -130,6 +141,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       return;
     }
 
+    setShowSyncToast(true);
     const updatedBook: Book = {
       ...book,
       members: [...book.members, { name: newMemberName.trim(), addedAt: new Date().toISOString() }],
@@ -143,6 +155,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       setError('');
     } else {
       setError(result.message || '添加失败');
+      setShowSyncToast(false);
     }
   };
 
@@ -150,6 +163,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     if (!book) return;
     if (!window.confirm(`确定要删除成员「${name}」吗？`)) return;
 
+    setShowSyncToast(true);
     const updatedBook: Book = {
       ...book,
       members: book.members.filter(m => m.name !== name),
@@ -161,6 +175,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       setError('');
     } else {
       setError(result.message || '删除失败');
+      setShowSyncToast(false);
     }
   };
 
@@ -173,6 +188,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     if (!book) return;
     if (!window.confirm('确定要删除这条记录吗？')) return;
 
+    setShowSyncToast(true);
     const result = await deleteRecordFromBook(config, bookId, recordId);
     if (result.success) {
       const updatedBook: Book = {
@@ -184,6 +200,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       setError('');
     } else {
       setError(result.message || '删除失败');
+      setShowSyncToast(false);
     }
   };
 
@@ -627,6 +644,8 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                     return;
                   }
 
+                  setSettling(true);
+                  setShowSyncToast(true);
                   let allSuccess = true;
                   for (const toUser of selectedSettleUsers) {
                     const amount = parseFloat(settleAmounts[toUser] || '0');
@@ -652,20 +671,50 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                     setShowSettleModal(false);
                     setSelectedSettleUsers([]);
                     setSettleAmounts({});
+                    setSettling(false);
                     loadBook();
                   } else {
                     setError('结算失败');
+                    setSettling(false);
+                    setShowSyncToast(false);
                   }
                 }}
-                disabled={selectedSettleUsers.length === 0}
-                className="w-full py-3 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={selectedSettleUsers.length === 0 || settling}
+                className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+                  settling
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed'
+                }`}
               >
-                确认结算
+                {settling ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    结算中...
+                  </span>
+                ) : (
+                  '确认结算'
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {showSyncToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-bounce">
+          <div className="flex items-center gap-2 px-4 py-3 bg-amber-500 text-white rounded-full shadow-lg">
+            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-sm font-medium">⏳ 同步到 GitHub 中，工作流更新需要等待 1-2 分钟</span>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
