@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -122,10 +122,18 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     if (showSyncToast) {
       const timer = setTimeout(() => {
         setShowSyncToast(false);
-      }, 5000);
+      }, 8000);
       return () => clearTimeout(timer);
     }
   }, [showSyncToast]);
+
+  useEffect(() => {
+    if (showSyncToast && pendingOperations === 0) {
+      setTimeout(() => {
+        setShowSyncToast(false);
+      }, 500);
+    }
+  }, [pendingOperations, showSyncToast]);
 
   const handleRefresh = async () => {
     setSyncing(true);
