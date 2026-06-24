@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { X, Users, User } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
 import { Book, Record as BookRecord, GitHubConfig } from '@/types';
@@ -8,6 +8,8 @@ interface AddRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: () => void;
+  onSyncStart?: () => void;
+  onSyncComplete?: () => void;
   bookId: string;
   deviceName: string;
   book: Book | null;
@@ -15,7 +17,7 @@ interface AddRecordModalProps {
   config: GitHubConfig;
 }
 
-export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, book, editRecord, config }: AddRecordModalProps) => {
+export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComplete, bookId, deviceName, book, editRecord, config }: AddRecordModalProps) => {
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -79,15 +81,10 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, boo
 
     setSubmitting(true);
     setError('');
+    onSyncStart?.();
 
     try {
-      if (editRecord) {
-        const bookData = await getBook(config, bookId);
-        if (!bookData) {
-          setError('账本不存在');
-          setSubmitting(false);
-          return;
-        }
+      if (editRecord && book) {
         const updatedRecord: BookRecord = {
           ...editRecord,
           type,
@@ -98,6 +95,17 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, boo
           payer,
           participants,
         };
+
+        onClose();
+        onAdd();
+
+        const bookData = await getBook(config, bookId);
+        if (!bookData) {
+          setError('账本不存在');
+          setSubmitting(false);
+          onSyncComplete?.();
+          return;
+        }
         const idx = bookData.records.findIndex(r => r.id === editRecord.id);
         if (idx !== -1) {
           bookData.records[idx] = updatedRecord;
@@ -105,14 +113,14 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, boo
           const result = await saveBook(config, bookData);
           if (!result.success) {
             setError(result.message || '保存失败');
-            setSubmitting(false);
-            return;
           }
         }
         setSubmitting(false);
+        onSyncComplete?.();
+      } else {
         onClose();
         onAdd();
-      } else {
+
         const result = await addRecordToBook(config, bookId, {
           type,
           amount: parseFloat(amount),
@@ -125,8 +133,6 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, boo
         });
         if (!result.success) {
           setError(result.message || '保存失败');
-          setSubmitting(false);
-          return;
         }
         setSubmitting(false);
         setType('expense');
@@ -136,12 +142,12 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, bookId, deviceName, boo
         setDate(new Date().toISOString().split('T')[0]);
         setPayer(deviceName);
         setParticipants([deviceName]);
-        onClose();
-        onAdd();
+        onSyncComplete?.();
       }
     } catch (err: any) {
       setError(err.message || '保存失败');
       setSubmitting(false);
+      onSyncComplete?.();
     }
   };
 

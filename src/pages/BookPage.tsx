@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -77,6 +77,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [settleAmounts, setSettleAmounts] = useState<Record<string, string>>({});
   const [showSyncToast, setShowSyncToast] = useState(false);
   const [settling, setSettling] = useState(false);
+  const [pendingOperations, setPendingOperations] = useState<number>(0);
 
   const loadBook = async () => {
     if (!bookId) {
@@ -140,42 +141,49 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       return;
     }
 
-    setShowSyncToast(true);
+    const newMember = { name: newMemberName.trim(), addedAt: new Date().toISOString() };
     const updatedBook: Book = {
       ...book,
-      members: [...book.members, { name: newMemberName.trim(), addedAt: new Date().toISOString() }],
+      members: [...book.members, newMember],
       updatedAt: new Date().toISOString(),
     };
+
+    setBook(updatedBook);
+    setNewMemberName('');
+    setShowMembers(false);
+    setError('');
+    setPendingOperations(prev => prev + 1);
+    setShowSyncToast(true);
+
     const result = await saveBook(config, updatedBook);
-    if (result.success) {
-      setBook(updatedBook);
-      setNewMemberName('');
-      setShowMembers(false);
-      setError('');
-    } else {
+    if (!result.success) {
+      setBook(book);
       setError(result.message || '添加失败');
-      setShowSyncToast(false);
     }
+    setPendingOperations(prev => prev - 1);
   };
 
   const handleDeleteMember = async (name: string) => {
     if (!book) return;
     if (!window.confirm(`确定要删除成员「${name}」吗？`)) return;
 
-    setShowSyncToast(true);
     const updatedBook: Book = {
       ...book,
       members: book.members.filter(m => m.name !== name),
       updatedAt: new Date().toISOString(),
     };
+
+    setBook(updatedBook);
+    setError('');
+    setPendingOperations(prev => prev + 1);
+    setShowSyncToast(true);
+
     const result = await saveBook(config, updatedBook);
-    if (result.success) {
-      setBook(updatedBook);
-      setError('');
-    } else {
+    if (!result.success) {
+      setBook(book);
       setError(result.message || '删除失败');
-      setShowSyncToast(false);
     }
+    setPendingOperations(prev => prev - 1);
   };
 
   const handleEditRecord = (record: BookRecord) => {
@@ -187,20 +195,23 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     if (!book) return;
     if (!window.confirm('确定要删除这条记录吗？')) return;
 
+    const updatedBook: Book = {
+      ...book,
+      records: book.records.filter(r => r.id !== recordId),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setBook(updatedBook);
+    setError('');
+    setPendingOperations(prev => prev + 1);
     setShowSyncToast(true);
+
     const result = await deleteRecordFromBook(config, bookId, recordId);
-    if (result.success) {
-      const updatedBook: Book = {
-        ...book,
-        records: book.records.filter(r => r.id !== recordId),
-        updatedAt: new Date().toISOString(),
-      };
-      setBook(updatedBook);
-      setError('');
-    } else {
+    if (!result.success) {
+      setBook(book);
       setError(result.message || '删除失败');
-      setShowSyncToast(false);
     }
+    setPendingOperations(prev => prev - 1);
   };
 
   const handleSelectIdentity = (name: string) => {
@@ -522,6 +533,13 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditRecord(null); }}
         onAdd={loadBook}
+        onSyncStart={() => {
+          setPendingOperations(prev => prev + 1);
+          setShowSyncToast(true);
+        }}
+        onSyncComplete={() => {
+          setPendingOperations(prev => prev - 1);
+        }}
         bookId={bookId}
         deviceName={currentUser}
         book={book}
@@ -649,40 +667,66 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                     return;
                   }
 
-                  setSettling(true);
-                  setShowSyncToast(true);
-                  let allSuccess = true;
+                  if (!book) return;
+                  const originalBook = book;
+
+                  const newRecords: BookRecord[] = [];
                   for (const toUser of selectedSettleUsers) {
                     const amount = parseFloat(settleAmounts[toUser] || '0');
                     if (amount > 0) {
-                      const result = await addRecordToBook(config, bookId, {
+                      newRecords.push({
+                        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 6),
                         type: 'income',
                         amount,
                         category: '结余',
                         note: `${currentUser} 结算给 ${toUser}`,
                         date: new Date().toISOString().split('T')[0],
+                        createdAt: new Date().toISOString(),
                         createdBy: currentUser,
                         payer: currentUser,
                         participants: [toUser, currentUser],
                       });
-                      if (!result.success) {
-                        allSuccess = false;
-                        break;
-                      }
                     }
                   }
 
-                  if (allSuccess) {
-                    setShowSettleModal(false);
-                    setSelectedSettleUsers([]);
-                    setSettleAmounts({});
-                    setSettling(false);
-                    loadBook();
-                  } else {
-                    setError('结算失败');
-                    setSettling(false);
-                    setShowSyncToast(false);
+                  const updatedBook: Book = {
+                    ...book,
+                    records: [...newRecords, ...book.records],
+                    updatedAt: new Date().toISOString(),
+                  };
+
+                  setBook(updatedBook);
+                  setShowSettleModal(false);
+                  setSelectedSettleUsers([]);
+                  setSettleAmounts({});
+                  setSettling(true);
+                  setPendingOperations(prev => prev + newRecords.length);
+                  setShowSyncToast(true);
+
+                  let allSuccess = true;
+                  for (const record of newRecords) {
+                    const result = await addRecordToBook(config, bookId, {
+                      type: record.type,
+                      amount: record.amount,
+                      category: record.category,
+                      note: record.note,
+                      date: record.date,
+                      createdBy: record.createdBy,
+                      payer: record.payer,
+                      participants: record.participants,
+                    });
+                    if (!result.success) {
+                      allSuccess = false;
+                      break;
+                    }
+                    setPendingOperations(prev => prev - 1);
                   }
+
+                  if (!allSuccess) {
+                    setBook(originalBook);
+                    setError('结算失败');
+                  }
+                  setSettling(false);
                 }}
                 disabled={selectedSettleUsers.length === 0 || settling}
                 className={`w-full py-3 rounded-xl font-semibold transition-colors ${
@@ -715,7 +759,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span className="text-sm font-medium">⏳ 同步到 GitHub 中，工作流更新需要等待 1-2 分钟</span>
+            <span className="text-sm font-medium">⏳ 同步中 ({pendingOperations}项)，工作流更新需要等待 1-2 分钟</span>
           </div>
         </div>
       )}
