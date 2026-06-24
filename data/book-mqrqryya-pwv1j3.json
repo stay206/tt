@@ -5,6 +5,20 @@
   "icon": "ğŸ“•",
   "records": [
     {
+      "id": "mqsbvcsga7lb91",
+      "type": "expense",
+      "amount": 1,
+      "category": "é¤é¥®",
+      "note": "",
+      "date": "2026-06-24T17:09:02.464Z",
+      "createdAt": "2026-06-24T17:09:02.464Z",
+      "createdBy": "åŒ",
+      "payer": "åŒ",
+      "participants": [
+        "åŒ"
+      ]
+    },
+    {
       "id": "mqrzb0fax8650t",
       "type": "income",
       "amount": 447.29,
@@ -375,7 +389,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T11:17:17.926Z",
+  "updatedAt": "2026-06-24T17:09:02.465Z",
   "members": [
     {
       "name": "é¾™",
@@ -394,4 +408,4 @@
       "addedAt": "2026-06-23T17:48:31.363Z"
     }
   ]
-}
+}§uçâçn×ŸŠw
