@@ -159,9 +159,7 @@ export const getBook = async (config: GitHubConfig, bookId: string): Promise<Boo
   }
 };
 
-// 保存账本
 export const saveBook = async (config: GitHubConfig, book: Book): Promise<{ success: boolean; message?: string }> => {
-  // 获取现有文件 SHA
   const file = await getFile(config, `data/${book.id}.json`);
   const content = JSON.stringify(book, null, 2);
   const result = await putFile(
@@ -173,8 +171,20 @@ export const saveBook = async (config: GitHubConfig, book: Book): Promise<{ succ
   );
 
   if (result.success) {
-    // 更新索引
     await updateIndex(config, book);
+  } else {
+    if (!file?.sha) {
+      const retryResult = await putFile(
+        config,
+        `data/${book.id}.json`,
+        content,
+        `创建账本: ${book.name}`
+      );
+      if (retryResult.success) {
+        await updateIndex(config, book);
+        return retryResult;
+      }
+    }
   }
   return result;
 };

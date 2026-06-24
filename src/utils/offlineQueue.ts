@@ -168,7 +168,13 @@ export const syncQueue = async (config: GitHubConfig): Promise<{ success: boolea
         case 'add_member':
         case 'delete_member':
         case 'update_book': {
-          const book = await getBook(config, op.bookId);
+          const cached = localStorage.getItem(`current_book_cache_${op.bookId}`);
+          let book = await getBook(config, op.bookId);
+          if (!book && cached) {
+            try {
+              book = JSON.parse(cached);
+            } catch {}
+          }
           if (book) {
             const updatedBook = applyQueueToBook(book);
             result = await saveBook(config, updatedBook);
