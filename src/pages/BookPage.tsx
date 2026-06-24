@@ -13,26 +13,24 @@ interface BookPageProps {
   deviceName: string;
 }
 
-// 计算结余：每个人应该支付/收到的金额
+// 计算结余：付款人应收其他人，其他人应付给付款人
 const calculateBalances = (records: BookRecord[], members: BookMember[]) => {
   const balances: Record<string, number> = {};
   members.forEach(m => balances[m.name] = 0);
 
   records.filter(r => r.type === 'expense' && r.participants && r.participants.length > 0).forEach(record => {
     const perPerson = Math.round(record.amount / record.participants.length * 100) / 100;
-    // 付款人支出全额，但只需承担自己的份额
+    // 付款人应收其他参与者的份额
     if (balances[record.payer] !== undefined) {
-      balances[record.payer] -= record.amount;
-      if (record.participants.includes(record.payer)) {
-        balances[record.payer] += perPerson;
-      }
+      record.participants.forEach(p => {
+        if (p !== record.payer && balances[p] !== undefined) {
+          // 参与者欠付款人
+          balances[p] -= perPerson;
+          // 付款人应收
+          balances[record.payer] += perPerson;
+        }
+      });
     }
-    // 其他参与者需承担份额
-    record.participants.forEach(p => {
-      if (p !== record.payer && balances[p] !== undefined) {
-        balances[p] += perPerson;
-      }
-    });
   });
 
   return balances;
@@ -359,6 +357,9 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                 <p className={`text-xl font-bold ${myBalance > 0 ? 'text-emerald-600' : myBalance < 0 ? 'text-rose-600' : 'text-gray-600'}`}>
                   {myBalance > 0 ? `应收 ¥${myBalance.toFixed(2)}` : myBalance < 0 ? `应付 ¥${(-myBalance).toFixed(2)}` : '¥0.00'}
                 </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {myBalance > 0 ? '其他人应付给你的金额' : myBalance < 0 ? '你应付给付款人的金额' : '已结清'}
+                </p>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
                 <p className="text-sm text-gray-500 mb-2">结算建议</p>
@@ -366,12 +367,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                   <div className="space-y-1">
                     {settlements.filter(s => s.from === currentUser || s.to === currentUser).map((s, i) => (
                       <p key={i} className="text-sm">
-                        {s.from === currentUser ? `应付给 ${s.to}` : `${s.from} 应付给你`}：¥{s.amount.toFixed(2)}
+                        {s.from === currentUser ? `应支付给 ${s.to}：¥${s.amount.toFixed(2)}` : `${s.from} 应支付给你：¥${s.amount.toFixed(2)}`}
                       </p>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400">无需结算</p>
+                  <p className="text-sm text-gray-400">暂无待结算项</p>
                 )}
               </div>
             </div>
