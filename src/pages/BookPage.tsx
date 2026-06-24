@@ -1,6 +1,6 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
+import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X, Share2, Copy } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { AddRecordModal } from '@/components/AddRecordModal';
 import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
@@ -80,6 +80,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitReminder, setShowSubmitReminder] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const loadBook = async () => {
     if (!bookId) {
@@ -405,6 +406,9 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setShowShare(true)} className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl" title="分享账本">
+              <Share2 className="w-5 h-5" />
+            </button>
             <button onClick={() => setShowMembers(true)} className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl" title="成员管理">
               <Users className="w-5 h-5" />
             </button>
@@ -806,6 +810,100 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-sm font-medium">💡 请记得在右上角提交修改</span>
+          </div>
+        </div>
+      )}
+
+      {showShare && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-primary-500" />
+                <h2 className="text-xl font-bold text-gray-800">分享账本</h2>
+              </div>
+              <button onClick={() => setShowShare(false)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-700">
+                <p className="font-medium mb-2">免登录使用方法</p>
+                <ol className="list-decimal list-inside space-y-1 text-xs">
+                  <li>复制下方链接，发送给家人或队友</li>
+                  <li>对方在浏览器打开链接即可直接使用</li>
+                  <li>无需注册账号，无需登录 GitHub</li>
+                  <li>支持电脑、手机、平板多设备访问</li>
+                </ol>
+              </div>
+
+              {config.token && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      id="includeToken"
+                      checked={true}
+                      readOnly
+                      className="mt-1"
+                    />
+                    <label htmlFor="includeToken" className="flex-1">
+                      <p className="font-medium">附带 Token（可写入）</p>
+                      <p className="text-xs mt-1 text-amber-600">
+                        对方打开链接也能添加/删除记录。
+                        <br />
+                        链接中会包含 Token，请只发给信任的人。
+                      </p>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">分享链接</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={(() => {
+                      const base = window.location.origin + '/tt/';
+                      const params = new URLSearchParams();
+                      params.set('owner', config.owner);
+                      params.set('repo', config.repo);
+                      if (config.branch && config.branch !== 'main') {
+                        params.set('branch', config.branch);
+                      }
+                      if (config.token) {
+                        params.set('token', config.token);
+                      }
+                      return `${base}#/?${params.toString()}`;
+                    })()}
+                    className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono text-gray-600 focus:outline-none"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    onClick={() => {
+                      const base = window.location.origin + '/tt/';
+                      const params = new URLSearchParams();
+                      params.set('owner', config.owner);
+                      params.set('repo', config.repo);
+                      if (config.branch && config.branch !== 'main') {
+                        params.set('branch', config.branch);
+                      }
+                      if (config.token) {
+                        params.set('token', config.token);
+                      }
+                      const url = `${base}#/?${params.toString()}`;
+                      navigator.clipboard.writeText(url);
+                    }}
+                    className="px-4 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-medium hover:bg-primary-600 flex items-center gap-1"
+                  >
+                    <Copy className="w-4 h-4" />
+                    复制
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

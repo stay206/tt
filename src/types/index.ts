@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿export interface Record {
+﻿﻿﻿﻿﻿﻿export interface Record {
   id: string;
   type: 'income' | 'expense';
   amount: number;
@@ -46,10 +46,14 @@ export interface BookIndex {
 }
 
 export interface GitHubConfig {
+  id: string;           // 配置唯一标识
+  name: string;         // 配置名称（如"我的账本"、"龙的账本"）
   owner: string;       // 仓库所有者用户名
   repo: string;        // 仓库名
   token: string;       // Personal Access Token
   branch?: string;     // 分支名，默认 main
+  isOwner?: boolean;   // 是否是仓库所有者
+  addedAt?: string;    // 添加时间
 }
 
 export interface SyncStatus {

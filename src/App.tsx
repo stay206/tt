@@ -1,14 +1,15 @@
-﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+import { HashRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
 import { SetupPage } from '@/pages/SetupPage';
 import { BooksPage } from '@/pages/BooksPage';
 import { BookPage } from '@/pages/BookPage';
 import { StatisticsPage } from '@/pages/StatisticsPage';
 import { GitHubConfig } from '@/types';
-import { getGitHubConfig, setGitHubConfig, getDeviceName } from '@/utils/github';
+import { getAllGitHubConfigs, getGitHubConfig, getCurrentConfigId, setCurrentConfigId, getDeviceName, addGitHubConfig } from '@/utils/github';
 
 function AppContent() {
-  const [config, setConfig] = useState<GitHubConfig | null>(null);
+  const [configs, setConfigs] = useState<GitHubConfig[]>([]);
+  const [currentConfig, setCurrentConfig] = useState<GitHubConfig | null>(null);
   const [deviceName, setDeviceName] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -19,41 +20,72 @@ function AppContent() {
     const urlToken = searchParams.get('token');
     const urlBranch = searchParams.get('branch');
 
+    const loadConfigs = () => {
+      const allConfigs = getAllGitHubConfigs();
+      setConfigs(allConfigs);
+      const currentId = getCurrentConfigId();
+      const current = allConfigs.find(c => c.id === currentId) || allConfigs[0] || null;
+      setCurrentConfig(current);
+    };
+
     if (urlOwner && urlRepo) {
-      const sharedConfig: GitHubConfig = {
-        owner: urlOwner,
-        repo: urlRepo,
-        token: urlToken || '',
-        branch: urlBranch || 'main',
-      };
-      setGitHubConfig(sharedConfig);
-      setConfig(sharedConfig);
-      // 清理 URL 上的敏感信息（仅保留 owner/repo/branch）
+      // 检查是否已有相同配置
+      const existing = getAllGitHubConfigs().find(
+        c => c.owner === urlOwner && c.repo === urlRepo
+      );
+      
+      if (existing) {
+        // 已有配置，切换到该配置
+        setCurrentConfigId(existing.id);
+        loadConfigs();
+      } else {
+        // 新配置，添加进去
+        const newConfig = addGitHubConfig({
+          name: `${urlOwner}/${urlRepo}`,
+          owner: urlOwner,
+          repo: urlRepo,
+          token: urlToken || '',
+          branch: urlBranch || 'main',
+          isOwner: false,
+        });
+        setCurrentConfigId(newConfig.id);
+        loadConfigs();
+      }
+      
+      // 清理 URL 上的敏感信息
       const cleanParams = new URLSearchParams();
-      cleanParams.set('owner', urlOwner);
-      cleanParams.set('repo', urlRepo);
-      if (urlBranch) cleanParams.set('branch', urlBranch);
       setSearchParams(cleanParams, { replace: true });
     } else {
-      const saved = getGitHubConfig();
-      if (saved) {
-        setConfig(saved);
-      }
+      loadConfigs();
     }
 
     setDeviceName(getDeviceName());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!config) {
+  const handleConfigChange = () => {
+    setCurrentConfig(null);
+  };
+
+  const handleConfigAdded = () => {
+    const allConfigs = getAllGitHubConfigs();
+    setConfigs(allConfigs);
+    const currentId = getCurrentConfigId();
+    const current = allConfigs.find(c => c.id === currentId) || allConfigs[0] || null;
+    setCurrentConfig(current);
+  };
+
+  const handleSwitchConfig = (configId: string) => {
+    setCurrentConfigId(configId);
+    const allConfigs = getAllGitHubConfigs();
+    const current = allConfigs.find(c => c.id === configId) || null;
+    setCurrentConfig(current);
+  };
+
+  if (!currentConfig) {
     return (
       <SetupPage
-        onConfigured={() => {
-          const c = getGitHubConfig();
-          if (c) {
-            setConfig(c);
-          }
-        }}
+        onConfigured={handleConfigAdded}
       />
     );
   }
@@ -64,27 +96,46 @@ function AppContent() {
         path="/"
         element={
           <BooksPage
-            config={config}
+            configs={configs}
+            currentConfig={currentConfig}
             deviceName={deviceName}
-            onConfigChange={() => {
-              setConfig(null);
-            }}
+            onConfigChange={handleConfigChange}
+            onSwitchConfig={handleSwitchConfig}
+            onConfigAdded={handleConfigAdded}
           />
         }
       />
       <Route
         path="/book/:bookId"
         element={
-          <BookPage config={config} deviceName={deviceName} />
+          <BookPageWrapper
+            deviceName={deviceName}
+          />
         }
       />
       <Route
         path="/statistics/:bookId"
-        element={<StatisticsPage config={config} />}
+        element={<StatisticsPage config={currentConfig} />}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
+}
+
+function BookPageWrapper({ deviceName }: { deviceName: string }) {
+  const { bookId } = useParams();
+  const [config, setConfig] = useState<GitHubConfig | null>(null);
+
+  useEffect(() => {
+    const currentConfig = getGitHubConfig();
+    setConfig(currentConfig);
+  }, [bookId]);
+
+  if (!config) {
+    return <div>加载中...</div>;
+  }
+
+  return <BookPage config={config} deviceName={deviceName} />;
 }
 
 function App() {

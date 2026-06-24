@@ -1,30 +1,112 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
+const GITHUB_CONFIGS_KEY = 'expense_tracker_github_configs';
+const CURRENT_CONFIG_ID_KEY = 'expense_tracker_current_config_id';
 const DEVICE_NAME_KEY = 'expense_tracker_device_name';
 
-export const getGitHubConfig = (): GitHubConfig | null => {
+// 获取所有GitHub配置（多仓库）
+export const getAllGitHubConfigs = (): GitHubConfig[] => {
   try {
-    const data = localStorage.getItem(GITHUB_CONFIG_KEY);
-    return data ? JSON.parse(data) : null;
+    const data = localStorage.getItem(GITHUB_CONFIGS_KEY);
+    if (data) {
+      return JSON.parse(data);
+    }
+    // 迁移旧配置
+    const oldConfig = localStorage.getItem(GITHUB_CONFIG_KEY);
+    if (oldConfig) {
+      const config = JSON.parse(oldConfig);
+      const migratedConfig: GitHubConfig = {
+        id: `config_${Date.now()}`,
+        name: config.repo || '默认',
+        owner: config.owner,
+        repo: config.repo,
+        token: config.token,
+        branch: config.branch || 'main',
+        isOwner: true,
+        addedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(GITHUB_CONFIGS_KEY, JSON.stringify([migratedConfig]));
+      localStorage.setItem(CURRENT_CONFIG_ID_KEY, migratedConfig.id);
+      localStorage.removeItem(GITHUB_CONFIG_KEY);
+      return [migratedConfig];
+    }
+    return [];
   } catch {
-    return null;
+    return [];
   }
 };
 
+// 保存所有GitHub配置
+export const saveAllGitHubConfigs = (configs: GitHubConfig[]): void => {
+  localStorage.setItem(GITHUB_CONFIGS_KEY, JSON.stringify(configs));
+};
+
+// 添加GitHub配置
+export const addGitHubConfig = (config: Omit<GitHubConfig, 'id' | 'addedAt'> & { id?: string }): GitHubConfig => {
+  const configs = getAllGitHubConfigs();
+  const newConfig: GitHubConfig = {
+    ...config,
+    id: config.id || `config_${Date.now()}`,
+    addedAt: new Date().toISOString(),
+  };
+  configs.push(newConfig);
+  saveAllGitHubConfigs(configs);
+  if (!getCurrentConfigId()) {
+    setCurrentConfigId(newConfig.id);
+  }
+  return newConfig;
+};
+
+// 删除GitHub配置
+export const removeGitHubConfig = (configId: string): void => {
+  const configs = getAllGitHubConfigs().filter(c => c.id !== configId);
+  saveAllGitHubConfigs(configs);
+  if (getCurrentConfigId() === configId) {
+    setCurrentConfigId(configs[0]?.id || '');
+  }
+};
+
+// 获取当前选中的配置ID
+export const getCurrentConfigId = (): string => {
+  return localStorage.getItem(CURRENT_CONFIG_ID_KEY) || '';
+};
+
+// 设置当前选中的配置ID
+export const setCurrentConfigId = (id: string): void => {
+  localStorage.setItem(CURRENT_CONFIG_ID_KEY, id);
+};
+
+// 获取当前GitHub配置
+export const getGitHubConfig = (): GitHubConfig | null => {
+  const configs = getAllGitHubConfigs();
+  const currentId = getCurrentConfigId();
+  return configs.find(c => c.id === currentId) || configs[0] || null;
+};
+
+// 设置当前GitHub配置（向后兼容）
 export const setGitHubConfig = (config: GitHubConfig | null): void => {
   if (config) {
-    localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(config));
+    const configs = getAllGitHubConfigs();
+    const existingIdx = configs.findIndex(c => c.id === config.id);
+    if (existingIdx !== -1) {
+      configs[existingIdx] = config;
+    } else {
+      configs.push(config);
+    }
+    saveAllGitHubConfigs(configs);
+    setCurrentConfigId(config.id);
   } else {
-    localStorage.removeItem(GITHUB_CONFIG_KEY);
+    // 清空所有配置
+    saveAllGitHubConfigs([]);
+    setCurrentConfigId('');
   }
 };
 
 export const getDeviceName = (): string => {
   let name = localStorage.getItem(DEVICE_NAME_KEY);
   if (!name) {
-    // 自动生成设备名
     const random = Math.random().toString(36).substring(2, 6);
     name = `用户${random}`;
     localStorage.setItem(DEVICE_NAME_KEY, name);
@@ -47,9 +129,8 @@ const getHeaders = (token?: string) => {
   return headers;
 };
 
-export const testConnection = async (config: GitHubConfig): Promise<{ success: boolean; message?: string; isPublic?: boolean }> => {
+export const testConnection = async (config: GitHubConfig): Promise<{ success: boolean; message?: string; isPublic?: boolean; ownerName?: string }> => {
   try {
-    // 尝试读取仓库信息
     const response = await fetch(`${GITHUB_API}/repos/${config.owner}/${config.repo}`, {
       headers: getHeaders(config.token),
     });
@@ -65,7 +146,7 @@ export const testConnection = async (config: GitHubConfig): Promise<{ success: b
     }
 
     const data = await response.json();
-    return { success: true, isPublic: !data.private };
+    return { success: true, isPublic: !data.private, ownerName: data.owner?.login || config.owner };
   } catch (e) {
     return { success: false, message: '网络错误' };
   }

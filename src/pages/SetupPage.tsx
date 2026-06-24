@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { Github, Eye, EyeOff, ArrowRight, Info, ExternalLink } from 'lucide-react';
 import { GitHubConfig } from '@/types';
 import { setGitHubConfig, getGitHubConfig, testConnection, getDeviceName, setDeviceName } from '@/utils/github';
@@ -40,10 +40,14 @@ export const SetupPage = ({ onConfigured }: SetupPageProps) => {
     setError('');
 
     const config: GitHubConfig = {
+      id: `config_${Date.now()}`,
+      name: `${owner.trim()}/${repo.trim()}`,
       owner: owner.trim(),
       repo: repo.trim(),
       token: mode === 'admin' ? token.trim() : '',
       branch: branch.trim() || 'main',
+      isOwner: mode === 'admin',
+      addedAt: new Date().toISOString(),
     };
 
     const result = await testConnection(config);
@@ -68,10 +72,14 @@ export const SetupPage = ({ onConfigured }: SetupPageProps) => {
     setError('');
 
     const config: GitHubConfig = {
+      id: `config_${Date.now()}`,
+      name: `${owner.trim()}/${repo.trim()}`,
       owner: owner.trim(),
       repo: repo.trim(),
       token: '',
       branch: branch.trim() || 'main',
+      isOwner: false,
+      addedAt: new Date().toISOString(),
     };
 
     const result = await testConnection(config);
