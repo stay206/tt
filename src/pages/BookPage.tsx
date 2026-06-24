@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -302,7 +302,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   }
 
   const filteredRecords = book.records.filter((record) => {
-    const matchesMonth = getMonthKey(record.date) === selectedMonth;
+    const matchesMonth = selectedMonth === 'all' || getMonthKey(record.date) === selectedMonth;
     const matchesSearch =
       record.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       record.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -312,12 +312,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
   // 本月总支出
   const monthlyTotalExpense = book.records
-    .filter((r) => r.type === 'expense' && getMonthKey(r.date) === selectedMonth)
+    .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth))
     .reduce((sum, r) => sum + r.amount, 0);
 
   // 本月个人支出（当前用户参与的支出）
   const monthlyPersonalExpense = book.records
-    .filter((r) => r.type === 'expense' && getMonthKey(r.date) === selectedMonth && r.participants?.includes(currentUser))
+    .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth) && r.participants?.includes(currentUser))
     .reduce((sum, r) => {
       const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
       return sum + perPerson;
@@ -325,29 +325,11 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
   // 本月收入
   const monthlyIncome = book.records
-    .filter((r) => r.type === 'income' && getMonthKey(r.date) === selectedMonth)
+    .filter((r) => r.type === 'income' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth))
     .reduce((sum, r) => sum + r.amount, 0);
-
-  // 总收入
-  const totalIncome = book.records
-    .filter((r) => r.type === 'income')
-    .reduce((sum, r) => sum + r.amount, 0);
-
-  // 总支出
-  const totalExpense = book.records
-    .filter((r) => r.type === 'expense')
-    .reduce((sum, r) => sum + r.amount, 0);
-
-  // 我的总支出
-  const personalTotalExpense = book.records
-    .filter((r) => r.type === 'expense' && r.participants?.includes(currentUser))
-    .reduce((sum, r) => {
-      const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
-      return sum + perPerson;
-    }, 0);
 
   // 计算结余
-  const balances = calculateBalances(book.records.filter(r => getMonthKey(r.date) === selectedMonth), book.members);
+  const balances = calculateBalances(book.records.filter(r => selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth), book.members);
   const myBalance = balances[currentUser] || 0;
 
   // 找出应该支付给谁
@@ -366,11 +348,14 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     });
   });
 
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    return { key: getMonthKey(date.toISOString()), label: `${date.getFullYear()}年${date.getMonth() + 1}月` };
-  });
+  const months = [
+    { key: 'all', label: '全部账单' },
+    ...Array.from({ length: 12 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      return { key: getMonthKey(date.toISOString()), label: `${date.getFullYear()}年${date.getMonth() + 1}月` };
+    }),
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -420,8 +405,8 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">本月概览</h2>
-            <p className="text-gray-500 mt-1">{book.description || '查看本月收支'}</p>
+            <h2 className="text-2xl font-bold text-gray-800">{selectedMonth === 'all' ? '全部概览' : '本月概览'}</h2>
+            <p className="text-gray-500 mt-1">{book.description || (selectedMonth === 'all' ? '查看全部收支' : '查看本月收支')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
@@ -450,15 +435,9 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <StatCard type="income" value={monthlyIncome} label="本月收入" />
-          <StatCard type="expense" value={monthlyTotalExpense} label="本月总支出" />
-          <StatCard type="expense" value={monthlyPersonalExpense} label="我的支出" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <StatCard type="income" value={totalIncome} label="总收入" />
-          <StatCard type="expense" value={totalExpense} label="总支出" />
-          <StatCard type="expense" value={personalTotalExpense} label="我的总支出" />
+          <StatCard type="income" value={monthlyIncome} label={selectedMonth === 'all' ? '总收入' : '本月收入'} />
+          <StatCard type="expense" value={monthlyTotalExpense} label={selectedMonth === 'all' ? '总支出' : '本月总支出'} />
+          <StatCard type="expense" value={monthlyPersonalExpense} label={selectedMonth === 'all' ? '我的总支出' : '我的支出'} />
         </div>
 
         {/* 结余显示 */}
