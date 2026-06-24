@@ -33,21 +33,6 @@
       ]
     },
     {
-      "id": "mqrn3btdhzoc78",
-      "type": "income",
-      "amount": 30,
-      "category": "其他",
-      "note": "卢 结算给 双",
-      "date": "2026-06-24",
-      "createdBy": "卢",
-      "createdAt": "2026-06-24T05:35:24.049Z",
-      "payer": "卢",
-      "participants": [
-        "卢",
-        "双"
-      ]
-    },
-    {
       "id": "mqrmr1q839thal",
       "type": "expense",
       "amount": 20,
@@ -66,7 +51,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T06:37:04.188Z",
+  "updatedAt": "2026-06-24T06:38:53.657Z",
   "members": [
     {
       "name": "龙",
