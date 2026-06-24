@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
@@ -46,6 +46,24 @@ export const saveAllGitHubConfigs = (configs: GitHubConfig[]): void => {
 // 添加GitHub配置
 export const addGitHubConfig = (config: Omit<GitHubConfig, 'id' | 'addedAt'> & { id?: string }): GitHubConfig => {
   const configs = getAllGitHubConfigs();
+  
+  // 检查是否已存在相同的仓库（owner + repo + branch 相同）
+  const existing = configs.find(c => 
+    c.owner === config.owner && c.repo === config.repo && (c.branch || 'main') === (config.branch || 'main')
+  );
+  if (existing) {
+    // 如果已有token但新配置没有token，保留原有token；如果新配置有token，更新token
+    if (config.token && !existing.token) {
+      existing.token = config.token;
+      existing.isOwner = config.isOwner;
+      saveAllGitHubConfigs(configs);
+    }
+    if (!getCurrentConfigId()) {
+      setCurrentConfigId(existing.id);
+    }
+    return existing;
+  }
+  
   const newConfig: GitHubConfig = {
     ...config,
     id: config.id || `config_${Date.now()}`,

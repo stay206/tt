@@ -1,8 +1,8 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Check, Link, ChevronDown, PlusCircle } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
-import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData, getAllGitHubConfigs, addGitHubConfig, setCurrentConfigId, testConnection, hashPassword, verifyPassword } from '@/utils/github';
+import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData, getAllGitHubConfigs, addGitHubConfig, setCurrentConfigId, testConnection, hashPassword, verifyPassword, removeGitHubConfig } from '@/utils/github';
 
 interface BooksPageProps {
   configs: GitHubConfig[];
@@ -102,14 +102,45 @@ export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, 
     }
 
     try {
-      const url = new URL(inviteLink);
-      const hashParams = new URLSearchParams(url.hash.substring(1));
-      const queryParams = url.searchParams;
+      let owner = '';
+      let repo = '';
+      let token = '';
+      let branch = 'main';
 
-      const owner = hashParams.get('owner') || queryParams.get('owner');
-      const repo = hashParams.get('repo') || queryParams.get('repo');
-      const token = hashParams.get('token') || queryParams.get('token');
-      const branch = hashParams.get('branch') || queryParams.get('branch') || 'main';
+      // 尝试解析完整 URL
+      try {
+        const url = new URL(inviteLink);
+        
+        // 从 hash 中提取参数（hash 路由格式：#/?owner=xxx&repo=xxx）
+        if (url.hash) {
+          const hashStr = url.hash.substring(1);
+          // 去掉开头的路径部分，只保留查询参数
+          const queryIndex = hashStr.indexOf('?');
+          if (queryIndex !== -1) {
+            const hashQuery = hashStr.substring(queryIndex + 1);
+            const hashParams = new URLSearchParams(hashQuery);
+            owner = hashParams.get('owner') || '';
+            repo = hashParams.get('repo') || '';
+            token = hashParams.get('token') || '';
+            branch = hashParams.get('branch') || 'main';
+          }
+        }
+        
+        // 如果 hash 中没有，尝试从 query 中获取
+        if (!owner || !repo) {
+          owner = owner || url.searchParams.get('owner') || '';
+          repo = repo || url.searchParams.get('repo') || '';
+          token = token || url.searchParams.get('token') || '';
+          branch = branch || url.searchParams.get('branch') || 'main';
+        }
+      } catch {
+        // 如果不是完整 URL，尝试直接解析为查询字符串
+        const params = new URLSearchParams(inviteLink.trim());
+        owner = params.get('owner') || '';
+        repo = params.get('repo') || '';
+        token = params.get('token') || '';
+        branch = params.get('branch') || 'main';
+      }
 
       if (!owner || !repo) {
         setError('邀请链接格式不正确');
@@ -117,7 +148,9 @@ export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, 
       }
 
       // 检查是否已有相同配置
-      const existing = configs.find(c => c.owner === owner && c.repo === repo);
+      const existing = configs.find(c => 
+        c.owner === owner && c.repo === repo && (c.branch || 'main') === branch
+      );
       if (existing) {
         onSwitchConfig(existing.id);
         setShowInviteModal(false);
@@ -232,24 +265,43 @@ export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, 
                     切换仓库
                   </div>
                   {configs.map((config) => (
-                    <button
-                      key={config.id}
-                      onClick={() => {
-                        onSwitchConfig(config.id);
-                        setShowConfigMenu(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center justify-between ${
-                        config.id === currentConfig.id ? 'bg-primary-50 text-primary-600' : 'text-gray-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Github className="w-4 h-4" />
-                        <span className="truncate max-w-40">{config.name}</span>
+                    <div key={config.id} className="group">
+                      <div className={`flex items-center justify-between ${
+                        config.id === currentConfig.id ? 'bg-primary-50' : ''
+                      }`}>
+                        <button
+                          onClick={() => {
+                            onSwitchConfig(config.id);
+                            setShowConfigMenu(false);
+                          }}
+                          className={`flex-1 px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${
+                            config.id === currentConfig.id ? 'text-primary-600' : 'text-gray-700'
+                          }`}
+                        >
+                          <Github className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate max-w-36">{config.name}</span>
+                          {config.id === currentConfig.id && (
+                            <Check className="w-4 h-4 flex-shrink-0" />
+                          )}
+                        </button>
+                        {configs.length > 1 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`确定要移除仓库「${config.name}」吗？本地缓存的数据会被清除。`)) {
+                                removeGitHubConfig(config.id);
+                                onConfigChange();
+                                setShowConfigMenu(false);
+                              }
+                            }}
+                            className="px-2 py-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="移除此仓库"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                      {config.id === currentConfig.id && (
-                        <Check className="w-4 h-4" />
-                      )}
-                    </button>
+                    </div>
                   ))}
                   <div className="border-t border-gray-100 mt-2 pt-2">
                     <button
