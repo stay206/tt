@@ -5,6 +5,21 @@
   "icon": "📕",
   "records": [
     {
+      "type": "income",
+      "amount": 30,
+      "category": "其他",
+      "note": "龙 结算给 双",
+      "date": "2026-06-24",
+      "createdBy": "龙",
+      "payer": "龙",
+      "participants": [
+        "双",
+        "龙"
+      ],
+      "id": "mqrnu2h3txp7sh",
+      "createdAt": "2026-06-24T05:56:11.655Z"
+    },
+    {
       "type": "expense",
       "amount": 1,
       "category": "餐饮",
@@ -83,7 +98,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T05:51:31.973Z",
+  "updatedAt": "2026-06-24T05:56:11.655Z",
   "members": [
     {
       "name": "龙",
