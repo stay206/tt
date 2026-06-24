@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
@@ -130,7 +130,12 @@ const putFile = async (
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    return { success: false, message: err.message || `保存失败: ${response.status}` };
+    const errMessage = err.message || `保存失败: ${response.status}`;
+    // 检查是否是 SHA 冲突错误
+    if (errMessage.includes('SHA') || response.status === 409) {
+      return { success: false, message: 'SHA conflict' };
+    }
+    return { success: false, message: errMessage };
   }
   return { success: true };
 };
@@ -159,21 +164,34 @@ export const getBook = async (config: GitHubConfig, bookId: string): Promise<Boo
   }
 };
 
-export const saveBook = async (config: GitHubConfig, book: Book): Promise<{ success: boolean; message?: string }> => {
-  const file = await getFile(config, `data/${book.id}.json`);
+export const saveBook = async (config: GitHubConfig, book: Book, retryCount = 3): Promise<{ success: boolean; message?: string }> => {
   const content = JSON.stringify(book, null, 2);
-  const result = await putFile(
-    config,
-    `data/${book.id}.json`,
-    content,
-    `更新账本: ${book.name}`,
-    file?.sha
-  );
+  
+  for (let i = 0; i < retryCount; i++) {
+    const file = await getFile(config, `data/${book.id}.json`);
+    const sha = file?.sha;
+    
+    const result = await putFile(
+      config,
+      `data/${book.id}.json`,
+      content,
+      `更新账本: ${book.name}`,
+      sha
+    );
 
-  if (result.success) {
-    await updateIndex(config, book);
-  } else {
-    if (!file?.sha) {
+    if (result.success) {
+      await updateIndex(config, book);
+      return result;
+    }
+    
+    // 如果是因为 SHA 冲突失败，等待一小段时间后重试
+    if (result.message?.includes('SHA')) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      continue;
+    }
+    
+    // 如果不是 SHA 问题，且文件不存在，尝试创建
+    if (!sha) {
       const retryResult = await putFile(
         config,
         `data/${book.id}.json`,
@@ -185,37 +203,47 @@ export const saveBook = async (config: GitHubConfig, book: Book): Promise<{ succ
         return retryResult;
       }
     }
+    
+    return result;
   }
-  return result;
+  
+  return { success: false, message: '保存失败：并发冲突，请重试' };
 };
 
 // 更新索引
-const updateIndex = async (config: GitHubConfig, book: Book): Promise<void> => {
-  const index = await getBookIndex(config);
-  const existingIdx = index.books.findIndex((b) => b.id === book.id);
+const updateIndex = async (config: GitHubConfig, book: Book, retryCount = 3): Promise<void> => {
+  for (let i = 0; i < retryCount; i++) {
+    const index = await getBookIndex(config);
+    const existingIdx = index.books.findIndex((b) => b.id === book.id);
 
-  const summary = {
-    id: book.id,
-    name: book.name,
-    description: book.description,
-    icon: book.icon,
-    updatedAt: book.updatedAt,
-  };
+    const summary = {
+      id: book.id,
+      name: book.name,
+      description: book.description,
+      icon: book.icon,
+      updatedAt: book.updatedAt,
+    };
 
-  if (existingIdx !== -1) {
-    index.books[existingIdx] = summary;
-  } else {
-    index.books.push(summary);
+    if (existingIdx !== -1) {
+      index.books[existingIdx] = summary;
+    } else {
+      index.books.push(summary);
+    }
+
+    const indexFile = await getFile(config, 'data/index.json');
+    const result = await putFile(
+      config,
+      'data/index.json',
+      JSON.stringify(index, null, 2),
+      '更新账本索引',
+      indexFile?.sha
+    );
+
+    if (result.success) return;
+    
+    // 如果失败，等待后重试
+    await new Promise(resolve => setTimeout(resolve, 300));
   }
-
-  const indexFile = await getFile(config, 'data/index.json');
-  await putFile(
-    config,
-    'data/index.json',
-    JSON.stringify(index, null, 2),
-    '更新账本索引',
-    indexFile?.sha
-  );
 };
 
 // 重置所有数据（清理乱码）
@@ -277,8 +305,8 @@ export const deleteBookFile = async (config: GitHubConfig, bookId: string): Prom
 };
 
 // 添加记录
-export const addRecordToBook = async (config: GitHubConfig, bookId: string, record: Omit<BookRecord, 'id' | 'createdAt'>): Promise<{ success: boolean; record?: BookRecord; message?: string }> => {
-  const book = await getBook(config, bookId);
+export const addRecordToBook = async (config: GitHubConfig, bookId: string, record: Omit<BookRecord, 'id' | 'createdAt'>, existingBook?: Book): Promise<{ success: boolean; record?: BookRecord; message?: string }> => {
+  const book = existingBook || await getBook(config, bookId);
   if (!book) {
     return { success: false, message: '账本不存在' };
   }
@@ -299,8 +327,8 @@ export const addRecordToBook = async (config: GitHubConfig, bookId: string, reco
   return { success: false, message: result.message };
 };
 
-export const deleteRecordFromBook = async (config: GitHubConfig, bookId: string, recordId: string): Promise<{ success: boolean; message?: string }> => {
-  const book = await getBook(config, bookId);
+export const deleteRecordFromBook = async (config: GitHubConfig, bookId: string, recordId: string, existingBook?: Book): Promise<{ success: boolean; message?: string }> => {
+  const book = existingBook || await getBook(config, bookId);
   if (!book) {
     return { success: false, message: '账本不存在' };
   }
