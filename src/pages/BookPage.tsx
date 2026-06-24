@@ -1,10 +1,10 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { AddRecordModal } from '@/components/AddRecordModal';
 import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
-import { getBook, saveBook, addRecordToBook } from '@/utils/github';
+import { getBook, saveBook } from '@/utils/github';
 import { getMonthKey } from '@/utils/format';
 import { getCategoriesByType } from '@/data/categories';
 
@@ -76,9 +76,9 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const [selectedSettleUsers, setSelectedSettleUsers] = useState<string[]>([]);
   const [settleAmounts, setSettleAmounts] = useState<Record<string, string>>({});
   const [showSyncToast, setShowSyncToast] = useState(false);
-  const [settling, setSettling] = useState(false);
-  const [pendingOperations, setPendingOperations] = useState<number>(0);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const loadBook = async () => {
     if (!bookId) {
@@ -123,26 +123,44 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     if (showSyncToast) {
       const timer = setTimeout(() => {
         setShowSyncToast(false);
-      }, 8000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [showSyncToast]);
 
-  useEffect(() => {
-    if (showSyncToast && pendingOperations === 0) {
-      setTimeout(() => {
-        setShowSyncToast(false);
-      }, 500);
-    }
-  }, [pendingOperations, showSyncToast]);
-
   const handleRefresh = async () => {
+    if (hasLocalChanges && !window.confirm('有未提交的修改，刷新将丢失这些更改，确定要刷新吗？')) {
+      return;
+    }
     setSyncing(true);
     await loadBook();
     setSyncing(false);
+    setHasLocalChanges(false);
   };
 
-  const handleAddMember = async () => {
+  const handleSubmitChanges = async () => {
+    if (!book || submitting) return;
+    
+    setSubmitting(true);
+    setError('');
+    setShowSyncToast(true);
+
+    try {
+      const result = await saveBook(config, book);
+      if (result.success) {
+        setHasLocalChanges(false);
+        setShowSyncToast(false);
+      } else {
+        setError(result.message || '提交失败');
+      }
+    } catch (err: any) {
+      setError(err.message || '提交失败');
+    }
+    
+    setSubmitting(false);
+  };
+
+  const handleAddMember = () => {
     if (!book || !newMemberName.trim()) return;
     const exists = book.members.some(m => m.name === newMemberName.trim());
     if (exists) {
@@ -161,38 +179,10 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setNewMemberName('');
     setShowMembers(false);
     setError('');
-    setPendingOperations(prev => prev + 1);
-    setShowSyncToast(true);
-
-    const latestBook = await getBook(config, bookId);
-    if (!latestBook) {
-      setBook(book);
-      setError('账本不存在');
-      setPendingOperations(prev => prev - 1);
-      return;
-    }
-
-    if (latestBook.members.some(m => m.name === newMemberNameTrimmed)) {
-      setError('成员已存在');
-      setPendingOperations(prev => prev - 1);
-      return;
-    }
-
-    const finalBook: Book = {
-      ...latestBook,
-      members: [...latestBook.members, { name: newMemberNameTrimmed, addedAt: new Date().toISOString() }],
-      updatedAt: new Date().toISOString(),
-    };
-
-    const result = await saveBook(config, finalBook);
-    if (!result.success) {
-      setBook(book);
-      setError(result.message || '添加失败');
-    }
-    setPendingOperations(prev => prev - 1);
+    setHasLocalChanges(true);
   };
 
-  const handleDeleteMember = async (name: string) => {
+  const handleDeleteMember = (name: string) => {
     if (!book) return;
     if (!window.confirm(`确定要删除成员「${name}」吗？`)) return;
 
@@ -204,29 +194,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
     setBook(updatedBook);
     setError('');
-    setPendingOperations(prev => prev + 1);
-    setShowSyncToast(true);
-
-    const latestBook = await getBook(config, bookId);
-    if (!latestBook) {
-      setBook(book);
-      setError('账本不存在');
-      setPendingOperations(prev => prev - 1);
-      return;
-    }
-
-    const finalBook: Book = {
-      ...latestBook,
-      members: latestBook.members.filter(m => m.name !== name),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const result = await saveBook(config, finalBook);
-    if (!result.success) {
-      setBook(book);
-      setError(result.message || '删除失败');
-    }
-    setPendingOperations(prev => prev - 1);
+    setHasLocalChanges(true);
   };
 
   const handleEditRecord = (record: BookRecord) => {
@@ -234,7 +202,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteRecord = async (recordId: string) => {
+  const handleDeleteRecord = (recordId: string) => {
     if (!book) return;
     if (!window.confirm('确定要删除这条记录吗？')) return;
 
@@ -246,29 +214,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
 
     setBook(updatedBook);
     setError('');
-    setPendingOperations(prev => prev + 1);
-    setShowSyncToast(true);
-
-    const latestBook = await getBook(config, bookId);
-    if (!latestBook) {
-      setBook(book);
-      setError('账本不存在');
-      setPendingOperations(prev => prev - 1);
-      return;
-    }
-
-    const finalBook: Book = {
-      ...latestBook,
-      records: latestBook.records.filter(r => r.id !== recordId),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const result = await saveBook(config, finalBook);
-    if (!result.success) {
-      setBook(book);
-      setError(result.message || '删除失败');
-    }
-    setPendingOperations(prev => prev - 1);
+    setHasLocalChanges(true);
   };
 
   const handleSelectIdentity = (name: string) => {
@@ -424,9 +370,24 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
             <button onClick={() => navigate(`/statistics/${bookId}`)} className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl" title="统计分析">
               <BarChart3 className="w-5 h-5" />
             </button>
-            <button onClick={handleRefresh} disabled={syncing} className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl" title="刷新">
+            <button onClick={handleRefresh} disabled={syncing || submitting} className="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-xl" title="刷新">
               <RefreshCw className={`w-5 h-5 ${syncing ? 'animate-spin' : ''}`} />
             </button>
+            {hasLocalChanges && (
+              <button onClick={handleSubmitChanges} disabled={submitting} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                submitting
+                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                  : 'bg-primary-500 text-white hover:bg-primary-600'
+              }`}>
+                {submitting ? (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : null}
+                {submitting ? '提交中' : '提交'}
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -602,19 +563,15 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       <AddRecordModal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditRecord(null); }}
-        onAdd={loadBook}
-        onSyncStart={() => {
-          setPendingOperations(prev => prev + 1);
-          setShowSyncToast(true);
+        onAdd={(newBook) => {
+          setBook(newBook);
+          setHasLocalChanges(true);
+          setIsModalOpen(false);
+          setEditRecord(null);
         }}
-        onSyncComplete={() => {
-          setPendingOperations(prev => prev - 1);
-        }}
-        bookId={bookId}
         deviceName={currentUser}
         book={book}
         editRecord={editRecord}
-        config={config}
       />
 
       {/* 成员管理弹窗 */}
@@ -730,7 +687,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               </div>
 
               <button
-                onClick={async () => {
+                onClick={() => {
                   const total = selectedSettleUsers.reduce((sum, u) => sum + parseFloat(settleAmounts[u] || '0'), 0);
                   if (total <= 0) {
                     alert('请选择至少一个结算对象并输入金额');
@@ -738,7 +695,6 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                   }
 
                   if (!book) return;
-                  const originalBook = book;
 
                   const newRecords: BookRecord[] = [];
                   for (const toUser of selectedSettleUsers) {
@@ -769,53 +725,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                   setShowSettleModal(false);
                   setSelectedSettleUsers([]);
                   setSettleAmounts({});
-                  setSettling(true);
-                  setPendingOperations(prev => prev + newRecords.length);
-                  setShowSyncToast(true);
-
-                  let allSuccess = true;
-                  for (const record of newRecords) {
-                    const result = await addRecordToBook(config, bookId, {
-                      type: record.type,
-                      amount: record.amount,
-                      category: record.category,
-                      note: record.note,
-                      date: record.date,
-                      createdBy: record.createdBy,
-                      payer: record.payer,
-                      participants: record.participants,
-                    });
-                    if (!result.success) {
-                      allSuccess = false;
-                      break;
-                    }
-                    setPendingOperations(prev => prev - 1);
-                  }
-
-                  if (!allSuccess) {
-                    setBook(originalBook);
-                    setError('结算失败');
-                  }
-                  setSettling(false);
+                  setHasLocalChanges(true);
                 }}
-                disabled={selectedSettleUsers.length === 0 || settling}
-                className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-                  settling
-                    ? 'bg-gray-400 text-white cursor-not-allowed'
-                    : 'bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed'
-                }`}
+                disabled={selectedSettleUsers.length === 0}
+                className="w-full py-3 rounded-xl font-semibold transition-colors bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {settling ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    结算中...
-                  </span>
-                ) : (
-                  '确认结算'
-                )}
+                确认结算
               </button>
             </div>
           </div>
@@ -829,7 +744,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span className="text-sm font-medium">⏳ 同步中 ({pendingOperations}项)，工作流更新需要等待 1-2 分钟</span>
+            <span className="text-sm font-medium">⏳ 提交中，工作流更新需要等待 1-2 分钟</span>
           </div>
         </div>
       )}

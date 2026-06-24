@@ -1,23 +1,18 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { X, Users, User } from 'lucide-react';
 import { getCategoriesByType } from '@/data/categories';
-import { Book, Record as BookRecord, GitHubConfig } from '@/types';
-import { addRecordToBook, saveBook, getBook } from '@/utils/github';
+import { Book, Record as BookRecord } from '@/types';
 
 interface AddRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: () => void;
-  onSyncStart?: () => void;
-  onSyncComplete?: () => void;
-  bookId: string;
+  onAdd: (book: Book) => void;
   deviceName: string;
   book: Book | null;
   editRecord?: BookRecord | null;
-  config: GitHubConfig;
 }
 
-export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComplete, bookId, deviceName, book, editRecord, config }: AddRecordModalProps) => {
+export const AddRecordModal = ({ isOpen, onClose, onAdd, deviceName, book, editRecord }: AddRecordModalProps) => {
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -25,13 +20,11 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [payer, setPayer] = useState(deviceName);
   const [participants, setParticipants] = useState<string[]>([deviceName]);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const categories = getCategoriesByType(type);
   const members = book?.members || [];
 
-  // 初始化编辑模式
   useEffect(() => {
     if (editRecord) {
       setType(editRecord.type);
@@ -52,7 +45,6 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
     }
   }, [editRecord, deviceName]);
 
-  // 计算每人应付金额（四舍五入）
   const perPersonAmount = participants.length > 0 && amount
     ? Math.round(parseFloat(amount) / participants.length * 100) / 100
     : 0;
@@ -69,79 +61,66 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
     setPayer(name);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !category) return;
+    if (!amount || !category || !book) return;
 
-    setSubmitting(true);
     setError('');
-    onSyncStart?.();
 
-    try {
-      if (editRecord && book) {
-        const updatedRecord: BookRecord = {
-          ...editRecord,
-          type,
-          amount: parseFloat(amount),
-          category,
-          note,
-          date,
-          payer,
-          participants,
-        };
+    if (editRecord) {
+      const updatedRecord: BookRecord = {
+        ...editRecord,
+        type,
+        amount: parseFloat(amount),
+        category,
+        note,
+        date,
+        payer,
+        participants,
+      };
 
-        onClose();
-        onAdd();
+      const updatedBook: Book = {
+        ...book,
+        records: book.records.map(r => r.id === editRecord.id ? updatedRecord : r),
+        updatedAt: new Date().toISOString(),
+      };
 
-        const bookData = await getBook(config, bookId);
-        if (!bookData) {
-          setError('账本不存在');
-          setSubmitting(false);
-          onSyncComplete?.();
-          return;
-        }
-        const idx = bookData.records.findIndex(r => r.id === editRecord.id);
-        if (idx !== -1) {
-          bookData.records[idx] = updatedRecord;
-          bookData.updatedAt = new Date().toISOString();
-          const result = await saveBook(config, bookData);
-          if (!result.success) {
-            setError(result.message || '保存失败');
-          }
-        }
-        setSubmitting(false);
-        onSyncComplete?.();
-      } else {
-        onClose();
-        onAdd();
+      onAdd(updatedBook);
+      setType('expense');
+      setAmount('');
+      setCategory('');
+      setNote('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setPayer(deviceName);
+      setParticipants([deviceName]);
+    } else {
+      const newRecord: BookRecord = {
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 6),
+        type,
+        amount: parseFloat(amount),
+        category,
+        note,
+        date,
+        createdAt: new Date().toISOString(),
+        createdBy: deviceName,
+        payer,
+        participants,
+      };
 
-        const result = await addRecordToBook(config, bookId, {
-          type,
-          amount: parseFloat(amount),
-          category,
-          note,
-          date,
-          createdBy: deviceName,
-          payer,
-          participants,
-        });
-        if (!result.success) {
-          setError(result.message || '保存失败');
-        }
-        setSubmitting(false);
-        setType('expense');
-        setAmount('');
-        setCategory('');
-        setNote('');
-        setDate(new Date().toISOString().split('T')[0]);
-        setPayer(deviceName);
-        setParticipants([deviceName]);
-        onSyncComplete?.();
-      }
-    } catch (err: any) {
-      setError(err.message || '保存失败');
-      setSubmitting(false);
-      onSyncComplete?.();
+      const updatedBook: Book = {
+        ...book,
+        records: [newRecord, ...book.records],
+        updatedAt: new Date().toISOString(),
+      };
+
+      onAdd(updatedBook);
+      setType('expense');
+      setAmount('');
+      setCategory('');
+      setNote('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setPayer(deviceName);
+      setParticipants([deviceName]);
     }
   };
 
@@ -172,7 +151,9 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
               type="button"
               onClick={() => { setType('expense'); setCategory(''); }}
               className={`flex-1 py-2.5 rounded-lg font-medium transition-all ${
-                type === 'expense' ? 'bg-white text-rose-500 shadow-sm' : 'text-gray-500'
+                type === 'expense'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               支出
@@ -181,7 +162,9 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
               type="button"
               onClick={() => { setType('income'); setCategory(''); }}
               className={`flex-1 py-2.5 rounded-lg font-medium transition-all ${
-                type === 'income' ? 'bg-white text-emerald-500 shadow-sm' : 'text-gray-500'
+                type === 'income'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               收入
@@ -191,7 +174,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">金额</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">¥</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">¥</span>
               <input
                 type="number"
                 step="0.01"
@@ -199,7 +182,7 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg font-medium"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-xl font-semibold"
               />
             </div>
           </div>
@@ -212,68 +195,71 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
                   key={cat.id}
                   type="button"
                   onClick={() => setCategory(cat.name)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all ${
                     category === cat.name
-                      ? 'border-primary-500 bg-primary-50 text-primary-600'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
                   }`}
                 >
-                  <span className="text-xl">{cat.icon}</span>
-                  <span className="text-xs">{cat.name}</span>
+                  <span className="text-xl mb-1">{cat.icon}</span>
+                  <span className="text-xs font-medium">{cat.name}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {type === 'expense' && members.length > 0 && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <User className="w-4 h-4 inline mr-1" />
-                  付款人
-                </label>
-                <select
-                  value={payer}
-                  onChange={(e) => handlePayerChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">付款人</label>
+            <div className="flex gap-2">
+              {members.map((member) => (
+                <button
+                  key={member.name}
+                  type="button"
+                  onClick={() => handlePayerChange(member.name)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
+                    payer === member.name
+                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
+                  }`}
                 >
-                  {members.map((m) => (
-                    <option key={m.name} value={m.name}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
+                  <User className="w-4 h-4" />
+                  <span className="font-medium">{member.name}</span>
+                  {member.name === payer && <span className="text-xs">付款</span>}
+                </button>
+              ))}
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Users className="w-4 h-4 inline mr-1" />
-                  参与成员（平分金额）
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {members.map((m) => (
-                    <button
-                      key={m.name}
-                      type="button"
-                      onClick={() => handleParticipantToggle(m.name)}
-                      className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                        participants.includes(m.name)
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      } ${m.name === payer ? 'ring-2 ring-primary-300' : ''}`}
-                    >
-                      {m.name}
-                      {m.name === payer && participants.includes(m.name) && ' (付款)'}
-                      {m.name === payer && !participants.includes(m.name) && ' (代付)'}
-                    </button>
-                  ))}
-                </div>
-                {amount && participants.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    每人应付：¥{perPersonAmount.toFixed(2)}
-                  </p>
-                )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              参与成员
+              <span className="text-gray-400 font-normal ml-2">({participants.length}人)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {members.map((member) => (
+                <button
+                  key={member.name}
+                  type="button"
+                  onClick={() => handleParticipantToggle(member.name)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
+                    participants.includes(member.name)
+                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="font-medium">{member.name}</span>
+                  {member.name === payer && participants.includes(member.name) && <span className="text-xs">(付款)</span>}
+                  {member.name !== payer && participants.includes(member.name) && <span className="text-xs">(分摊)</span>}
+                </button>
+              ))}
+            </div>
+            {participants.length > 1 && (
+              <div className="mt-2 text-sm text-gray-500">
+                每人分摊：¥{perPersonAmount.toFixed(2)}
               </div>
-            </>
-          )}
+            )}
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">日期</label>
@@ -287,39 +273,22 @@ export const AddRecordModal = ({ isOpen, onClose, onAdd, onSyncStart, onSyncComp
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">备注</label>
-            <input
-              type="text"
+            <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="添加备注..."
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+              rows={3}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
             />
           </div>
 
           <button
             type="submit"
-            disabled={!amount || !category || submitting}
-            className={`w-full py-3.5 rounded-xl font-semibold transition-all ${
-              amount && category && !submitting
-                ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-lg shadow-primary-500/30'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
+            disabled={!amount || !category}
+            className="w-full py-4 bg-primary-500 text-white rounded-xl font-semibold text-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                同步中...
-              </span>
-            ) : editRecord ? '保存修改' : '保存'}
+            {editRecord ? '保存修改' : '添加记录'}
           </button>
-          {submitting && (
-            <p className="text-center text-xs text-amber-500 mt-3">
-              ⏳ 正在同步到 GitHub，工作流更新需要等待 1-2 分钟
-            </p>
-          )}
         </form>
       </div>
     </div>
