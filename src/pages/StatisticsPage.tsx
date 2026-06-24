@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title, Filler } from 'chart.js';
 import { Pie, Bar, Line } from 'react-chartjs-2';
@@ -67,16 +67,21 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
     );
   }
 
-  const months = Array.from({ length: 6 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    return {
-      key: getMonthKey(date.toISOString()),
-      label: `${date.getMonth() + 1}月`,
-    };
-  }).reverse();
+  const months = [
+    { key: 'all', label: '全部账单' },
+    ...Array.from({ length: 6 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      return {
+        key: getMonthKey(date.toISOString()),
+        label: `${date.getMonth() + 1}月`,
+      };
+    }).reverse(),
+  ];
 
-  const monthRecords = book.records.filter((r) => getMonthKey(r.date) === selectedMonth);
+  const [selectedUser, setSelectedUser] = useState<string>('all');
+
+  const monthRecords = book.records.filter((r) => (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth));
 
   const expenseByCategory = monthRecords
     .filter((r) => r.type === 'expense')
@@ -121,11 +126,11 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
   };
 
   const trendData = {
-    labels: months.map((m) => m.label),
-    datasets: [
+    labels: months.slice(1).map((m) => m.label),
+    datasets: selectedUser === 'all' ? [
       {
         label: '收入',
-        data: months.map((m) =>
+        data: months.slice(1).map((m) =>
           book.records
             .filter((r) => r.type === 'income' && getMonthKey(r.date) === m.key)
             .reduce((sum, r) => sum + r.amount, 0)
@@ -139,13 +144,48 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
       },
       {
         label: '支出',
-        data: months.map((m) =>
+        data: months.slice(1).map((m) =>
           book.records
             .filter((r) => r.type === 'expense' && getMonthKey(r.date) === m.key)
             .reduce((sum, r) => sum + r.amount, 0)
         ),
         borderColor: '#f43f5e',
         backgroundColor: 'rgba(244, 63, 94, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+    ] : [
+      {
+        label: `${selectedUser} 的支出`,
+        data: months.slice(1).map((m) =>
+          book.records
+            .filter((r) => r.type === 'expense' && getMonthKey(r.date) === m.key && r.participants?.includes(selectedUser))
+            .reduce((sum, r) => {
+              const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
+              return sum + perPerson;
+            }, 0)
+        ),
+        borderColor: '#f43f5e',
+        backgroundColor: 'rgba(244, 63, 94, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+      {
+        label: `${selectedUser} 的收入`,
+        data: months.slice(1).map((m) =>
+          book.records
+            .filter((r) => r.type === 'income' && getMonthKey(r.date) === m.key && r.participants?.includes(selectedUser))
+            .reduce((sum, r) => {
+              const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
+              return sum + perPerson;
+            }, 0)
+        ),
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
         fill: true,
         tension: 0.4,
         pointRadius: 4,
@@ -181,7 +221,19 @@ export const StatisticsPage = ({ config }: StatisticsPageProps) => {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end gap-4">
+          <select
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+          >
+            <option value="all">全部用户</option>
+            {book.members.map((member) => (
+              <option key={member.name} value={member.name}>
+                {member.name}
+              </option>
+            ))}
+          </select>
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
