@@ -20,7 +20,6 @@ export interface SyncStatus {
   lastError?: string;
 }
 
-// ��ȡ��������
 export const getQueue = (): QueueOperation[] => {
   try {
     const data = localStorage.getItem(QUEUE_KEY);
@@ -30,12 +29,10 @@ export const getQueue = (): QueueOperation[] => {
   }
 };
 
-// �����������
 const saveQueue = (queue: QueueOperation[]): void => {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 };
 
-// ��ȡͬ��״̬
 export const getSyncStatus = (): SyncStatus => {
   try {
     const data = localStorage.getItem(SYNC_STATUS_KEY);
@@ -45,12 +42,10 @@ export const getSyncStatus = (): SyncStatus => {
   }
 };
 
-// ����ͬ��״̬
 const saveSyncStatus = (status: SyncStatus): void => {
   localStorage.setItem(SYNC_STATUS_KEY, JSON.stringify(status));
 };
 
-// ���Ӳ���������
 export const addToQueue = (operation: Omit<QueueOperation, 'id' | 'timestamp' | 'retryCount'>): void => {
   const queue = getQueue();
   const newOp: QueueOperation = {
@@ -64,14 +59,12 @@ export const addToQueue = (operation: Omit<QueueOperation, 'id' | 'timestamp' | 
   updateSyncStatus();
 };
 
-// �Ӷ������Ƴ�����
 const removeFromQueue = (operationId: string): void => {
   const queue = getQueue().filter(op => op.id !== operationId);
   saveQueue(queue);
   updateSyncStatus();
 };
 
-// ����ͬ��״̬
 const updateSyncStatus = (): void => {
   const queue = getQueue();
   const status = getSyncStatus();
@@ -79,14 +72,12 @@ const updateSyncStatus = (): void => {
   saveSyncStatus(status);
 };
 
-// Ӧ�ñ��ض��е��˱�����
 export const applyQueueToBook = (book: Book): Book => {
   const queue = getQueue().filter(op => op.bookId === book.id);
   if (queue.length === 0) return book;
 
   const updatedBook = { ...book, records: [...book.records] };
 
-  // ��ʱ��˳��Ӧ�ò���
   queue.sort((a, b) => a.timestamp - b.timestamp);
 
   queue.forEach(op => {
@@ -121,16 +112,15 @@ export const applyQueueToBook = (book: Book): Book => {
   return updatedBook;
 };
 
-// ͬ�����е� GitHub
 export const syncQueue = async (config: GitHubConfig): Promise<{ success: boolean; message?: string }> => {
   const status = getSyncStatus();
   if (status.isSyncing) {
-    return { success: false, message: '����ͬ����' };
+    return { success: false, message: '正在同步中' };
   }
 
   const queue = getQueue();
   if (queue.length === 0) {
-    return { success: true, message: 'û�д�ͬ���Ĳ���' };
+    return { success: true, message: '没有待同步的操作' };
   }
 
   status.isSyncing = true;
@@ -158,10 +148,10 @@ export const syncQueue = async (config: GitHubConfig): Promise<{ success: boolea
               book.updatedAt = new Date().toISOString();
               result = await saveBook(config, book);
             } else {
-              result = { success: false, message: '��¼������' };
+              result = { success: false, message: '记录不存在' };
             }
           } else {
-            result = { success: false, message: '�˱�������' };
+            result = { success: false, message: '账本不存在' };
           }
           break;
         }
@@ -179,12 +169,12 @@ export const syncQueue = async (config: GitHubConfig): Promise<{ success: boolea
             const updatedBook = applyQueueToBook(book);
             result = await saveBook(config, updatedBook);
           } else {
-            result = { success: false, message: '�˱�������' };
+            result = { success: false, message: '账本不存在' };
           }
           break;
         }
         default:
-          result = { success: false, message: 'δ֪��������' };
+          result = { success: false, message: '未知操作类型' };
       }
 
       if (result.success) {
@@ -210,17 +200,16 @@ export const syncQueue = async (config: GitHubConfig): Promise<{ success: boolea
   status.isSyncing = false;
   status.lastSync = Date.now();
   if (failedOps.length > 0) {
-    status.lastError = `${failedOps.length} ������ͬ��ʧ��`;
+    status.lastError = `${failedOps.length} 个操作同步失败`;
   }
   saveSyncStatus(status);
 
   if (failedOps.length > 0) {
-    return { success: false, message: `${failedOps.length} ������ͬ��ʧ�ܣ������� ${failedOps[0].retryCount} ��` };
+    return { success: false, message: `${failedOps.length} 个操作同步失败，已重试 ${failedOps[0].retryCount} 次` };
   }
-  return { success: true, message: 'ͬ�����' };
+  return { success: true, message: '同步完成' };
 };
 
-// 清空队列
 export const clearQueue = (): void => {
   localStorage.removeItem(QUEUE_KEY);
   updateSyncStatus();
