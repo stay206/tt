@@ -40,7 +40,7 @@
       "amount": 143.2,
       "category": "餐饮",
       "note": "",
-      "date": "2026-06-24",
+      "date": "2026-06-11",
       "createdBy": "双",
       "payer": "双",
       "participants": [
@@ -101,7 +101,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-24T07:05:33.313Z",
+  "updatedAt": "2026-06-24T07:09:34.395Z",
   "members": [
     {
       "name": "龙",
