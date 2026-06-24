@@ -1,6 +1,6 @@
-﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { AddRecordModal } from '@/components/AddRecordModal';
 import { Book, GitHubConfig, BookMember, Record as BookRecord } from '@/types';
@@ -65,6 +65,10 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
       }
     }
   }, [book, bookId]);
+
+  const [showSettleModal, setShowSettleModal] = useState(false);
+  const [selectedSettleUsers, setSelectedSettleUsers] = useState<string[]>([]);
+  const [settleAmounts, setSettleAmounts] = useState<Record<string, string>>({});
 
   const loadBook = async () => {
     if (!bookId) {
@@ -324,6 +328,24 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     .filter((r) => r.type === 'income' && getMonthKey(r.date) === selectedMonth)
     .reduce((sum, r) => sum + r.amount, 0);
 
+  // 总收入
+  const totalIncome = book.records
+    .filter((r) => r.type === 'income')
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // 总支出
+  const totalExpense = book.records
+    .filter((r) => r.type === 'expense')
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // 我的总支出
+  const personalTotalExpense = book.records
+    .filter((r) => r.type === 'expense' && r.participants?.includes(currentUser))
+    .reduce((sum, r) => {
+      const perPerson = Math.round(r.amount / (r.participants?.length || 1) * 100) / 100;
+      return sum + perPerson;
+    }, 0);
+
   // 计算结余
   const balances = calculateBalances(book.records.filter(r => getMonthKey(r.date) === selectedMonth), book.members);
   const myBalance = balances[currentUser] || 0;
@@ -433,10 +455,32 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
           <StatCard type="expense" value={monthlyPersonalExpense} label="我的支出" />
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <StatCard type="income" value={totalIncome} label="总收入" />
+          <StatCard type="expense" value={totalExpense} label="总支出" />
+          <StatCard type="expense" value={personalTotalExpense} label="我的总支出" />
+        </div>
+
         {/* 结余显示 */}
         {book.members.length > 1 && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">账单结余</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">账单结余</h3>
+              {settlements.filter(s => s.from === currentUser).length > 0 && (
+                <button onClick={() => {
+                  const mySettlements = settlements.filter(s => s.from === currentUser);
+                  setSelectedSettleUsers(mySettlements.map(s => s.to));
+                  const amounts: Record<string, string> = {};
+                  mySettlements.forEach(s => {
+                    amounts[s.to] = s.amount.toFixed(2);
+                  });
+                  setSettleAmounts(amounts);
+                  setShowSettleModal(true);
+                }} className="px-4 py-2 bg-primary-500 text-white rounded-xl text-sm font-medium hover:bg-primary-600 transition-colors">
+                  一键结算
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className={`p-4 rounded-xl ${myBalance > 0 ? 'bg-emerald-50' : myBalance < 0 ? 'bg-rose-50' : 'bg-gray-50'}`}>
                 <p className="text-sm text-gray-500">我的结余</p>
@@ -571,6 +615,117 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                 ))}
               </div>
               <p className="text-xs text-gray-500">成员可以参与账单平分，添加记录时选择参与成员</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 结余弹窗 */}
+      {showSettleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-800">一键结算</h2>
+              <button onClick={() => setShowSettleModal(false)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-500">选择要结算的对象，输入结算金额（默认为应支付金额）</p>
+              
+              <div className="space-y-3">
+                {book.members.filter(m => m.name !== currentUser).map((member) => (
+                  <div key={member.name} className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedSettleUsers.includes(member.name)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSettleUsers([...selectedSettleUsers, member.name]);
+                            if (!settleAmounts[member.name]) {
+                              const s = settlements.find(st => st.from === currentUser && st.to === member.name);
+                              const amounts = { ...settleAmounts };
+                              amounts[member.name] = s ? s.amount.toFixed(2) : '0';
+                              setSettleAmounts(amounts);
+                            }
+                          } else {
+                            setSelectedSettleUsers(selectedSettleUsers.filter(u => u !== member.name));
+                          }
+                        }}
+                        className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
+                      />
+                      <span className="font-medium text-gray-800">{member.name}</span>
+                    </label>
+                    {selectedSettleUsers.includes(member.name) && (
+                      <div className="flex-1 relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">¥</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={settleAmounts[member.name] || ''}
+                          onChange={(e) => {
+                            const amounts = { ...settleAmounts };
+                            amounts[member.name] = e.target.value;
+                            setSettleAmounts(amounts);
+                          }}
+                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">结算总额</span>
+                  <span className="text-lg font-bold text-primary-500">¥{selectedSettleUsers.reduce((sum, u) => sum + parseFloat(settleAmounts[u] || '0'), 0).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  const total = selectedSettleUsers.reduce((sum, u) => sum + parseFloat(settleAmounts[u] || '0'), 0);
+                  if (total <= 0) {
+                    alert('请选择至少一个结算对象并输入金额');
+                    return;
+                  }
+
+                  selectedSettleUsers.forEach(toUser => {
+                    const amount = parseFloat(settleAmounts[toUser] || '0');
+                    if (amount > 0) {
+                      addToQueue({
+                        type: 'add_record',
+                        bookId,
+                        data: {
+                          id: Date.now().toString(36) + Math.random().toString(36).substr(2, 6),
+                          type: 'income' as const,
+                          amount,
+                          category: '其他',
+                          note: `${currentUser} 结算给 ${toUser}`,
+                          date: new Date().toISOString().split('T')[0],
+                          createdBy: currentUser,
+                          createdAt: new Date().toISOString(),
+                          payer: currentUser,
+                          participants: [currentUser, toUser],
+                        },
+                      });
+                    }
+                  });
+
+                  setShowSettleModal(false);
+                  setSelectedSettleUsers([]);
+                  setSettleAmounts({});
+                  loadBook();
+                }}
+                disabled={selectedSettleUsers.length === 0}
+                className="w-full py-3 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                确认结算
+              </button>
             </div>
           </div>
         </div>
