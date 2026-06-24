@@ -1,3 +1,11 @@
 {
-  "books": []
+  "books": [
+    {
+      "id": "book-mqsc6ndp-h1gcm8",
+      "name": "账本",
+      "description": "",
+      "icon": "📕",
+      "updatedAt": "2026-06-24T17:17:49.405Z"
+    }
+  ]
 }
