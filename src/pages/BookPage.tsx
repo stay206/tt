@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -472,7 +472,7 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium text-gray-800">{record.category}</span>
-                          {record.payer && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{record.payer}付</span>}
+                          {record.payer && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{record.payer === currentUser ? '你付' : `${record.payer}付`}</span>}
                           {record.participants && record.participants.length > 1 && (
                             <span className="text-xs text-primary-500 bg-primary-50 px-2 py-0.5 rounded">
                               {record.participants.length}人平分
