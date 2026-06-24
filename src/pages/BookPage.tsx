@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -479,8 +479,8 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <StatCard type="income" value={monthlyIncome} label={selectedMonth === 'all' ? '总收入' : '本月收入'} />
-          <StatCard type="expense" value={monthlyTotalExpense} label={selectedMonth === 'all' ? '总支出' : '本月总支出'} />
+          <StatCard type="income" value={monthlyIncome} label={selectedMonth === 'all' ? '我的总收入' : '我的本月收入'} />
+          <StatCard type="expense" value={monthlyTotalExpense} label={selectedMonth === 'all' ? '账本总支出' : '账本本月总支出'} />
           <StatCard type="expense" value={monthlyPersonalExpense} label={selectedMonth === 'all' ? '我的总支出' : '我的支出'} />
         </div>
 
