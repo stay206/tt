@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X, Share2, Copy } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -372,21 +372,45 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const balances = calculateBalances(book.records.filter(r => selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth), book.members);
   const myBalance = balances[currentUser] || 0;
 
-  // 找出应该支付给谁
+  // 结算算法：贪心算法，每次让负债最多的人给应收最多的人转账
   const settlements: { from: string; to: string; amount: number }[] = [];
-  const positiveBalances = Object.entries(balances).filter(([_, b]) => b > 0);
-  const negativeBalances = Object.entries(balances).filter(([_, b]) => b < 0);
-
-  negativeBalances.forEach(([payer, debt]) => {
-    positiveBalances.forEach(([receiver, credit]) => {
-      if (debt < 0 && credit > 0) {
-        const amount = Math.min(-debt, credit);
-        if (amount > 0.01) {
-          settlements.push({ from: payer, to: receiver, amount: Math.round(amount * 100) / 100 });
-        }
-      }
-    });
+  
+  // 复制余额数据，保留两位小数精度
+  const debtors: { name: string; amount: number }[] = [];
+  const creditors: { name: string; amount: number }[] = [];
+  
+  Object.entries(balances).forEach(([name, balance]) => {
+    if (balance > 0.01) {
+      creditors.push({ name, amount: Math.round(balance * 100) / 100 });
+    } else if (balance < -0.01) {
+      debtors.push({ name, amount: Math.round(-balance * 100) / 100 });
+    }
   });
+  
+  // 按金额从大到小排序
+  debtors.sort((a, b) => b.amount - a.amount);
+  creditors.sort((a, b) => b.amount - a.amount);
+  
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const payer = debtors[i];
+    const receiver = creditors[j];
+    const amount = Math.min(payer.amount, receiver.amount);
+    
+    if (amount > 0.01) {
+      settlements.push({
+        from: payer.name,
+        to: receiver.name,
+        amount: Math.round(amount * 100) / 100
+      });
+    }
+    
+    payer.amount -= amount;
+    receiver.amount -= amount;
+    
+    if (payer.amount < 0.01) i++;
+    if (receiver.amount < 0.01) j++;
+  }
 
   // 按方案分组结算建议（当前用户视角）
   const mySettlementPlans: { title: string; items: { from: string; to: string; amount: number }[] }[] = [];
