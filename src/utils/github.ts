@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
@@ -103,18 +103,37 @@ export const getGitHubConfig = (): GitHubConfig | null => {
   return configs.find(c => c.id === currentId) || configs[0] || null;
 };
 
-// 设置当前GitHub配置（向后兼容）
+// 设置当前GitHub配置（向后兼容）- 按 owner+repo+branch 去重
 export const setGitHubConfig = (config: GitHubConfig | null): void => {
   if (config) {
     const configs = getAllGitHubConfigs();
-    const existingIdx = configs.findIndex(c => c.id === config.id);
+    // 先按 owner+repo+branch 查找已存在的配置
+    const branchKey = config.branch || 'main';
+    const existingIdx = configs.findIndex(c =>
+      c.owner === config.owner &&
+      c.repo === config.repo &&
+      (c.branch || 'main') === branchKey
+    );
     if (existingIdx !== -1) {
-      configs[existingIdx] = config;
+      // 已存在，保留原 id，合并配置（用新值覆盖空值）
+      const existing = configs[existingIdx];
+      configs[existingIdx] = {
+        ...existing,
+        ...config,
+        id: existing.id, // 保留原 id
+        addedAt: existing.addedAt, // 保留原添加时间
+        // 如果新配置有 token 但旧配置没有，更新 token
+        token: config.token || existing.token,
+        // 如果新配置有 isOwner 信息，更新
+        isOwner: config.isOwner ?? existing.isOwner,
+      };
+      saveAllGitHubConfigs(configs);
+      setCurrentConfigId(existing.id);
     } else {
       configs.push(config);
+      saveAllGitHubConfigs(configs);
+      setCurrentConfigId(config.id);
     }
-    saveAllGitHubConfigs(configs);
-    setCurrentConfigId(config.id);
   } else {
     // 清空所有配置
     saveAllGitHubConfigs([]);
