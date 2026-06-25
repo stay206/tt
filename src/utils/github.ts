@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Book, BookIndex, GitHubConfig, Record as BookRecord } from '@/types';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_CONFIG_KEY = 'expense_tracker_github_config';
@@ -75,6 +75,37 @@ export const addGitHubConfig = (config: Omit<GitHubConfig, 'id' | 'addedAt'> & {
     setCurrentConfigId(newConfig.id);
   }
   return newConfig;
+};
+
+// 清理 localStorage 中重复的仓库配置（按 owner+repo+branch 分组，保留第一个）
+export const cleanDuplicateConfigs = (): number => {
+  const configs = getAllGitHubConfigs();
+  if (configs.length <= 1) return 0;
+  
+  const seen = new Set<string>();
+  const cleaned: GitHubConfig[] = [];
+  let removed = 0;
+  
+  for (const config of configs) {
+    const key = `${config.owner}/${config.repo}#${config.branch || 'main'}`;
+    if (seen.has(key)) {
+      removed++;
+    } else {
+      seen.add(key);
+      cleaned.push(config);
+    }
+  }
+  
+  if (removed > 0) {
+    saveAllGitHubConfigs(cleaned);
+    // 确保当前配置仍然存在
+    const currentId = getCurrentConfigId();
+    if (currentId && !cleaned.find(c => c.id === currentId)) {
+      setCurrentConfigId(cleaned[0]?.id || '');
+    }
+  }
+  
+  return removed;
 };
 
 // 删除GitHub配置

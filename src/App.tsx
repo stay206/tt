@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
 import { Download, X, RefreshCw } from 'lucide-react';
 import { SetupPage } from '@/pages/SetupPage';
@@ -6,7 +6,7 @@ import { BooksPage } from '@/pages/BooksPage';
 import { BookPage } from '@/pages/BookPage';
 import { StatisticsPage } from '@/pages/StatisticsPage';
 import { GitHubConfig } from '@/types';
-import { getAllGitHubConfigs, getGitHubConfig, getCurrentConfigId, setCurrentConfigId, getDeviceName, addGitHubConfig, getLatestRelease, compareVersions } from '@/utils/github';
+import { getAllGitHubConfigs, getGitHubConfig, getCurrentConfigId, setCurrentConfigId, getDeviceName, addGitHubConfig, getLatestRelease, compareVersions, cleanDuplicateConfigs } from '@/utils/github';
 
 const CURRENT_VERSION = '1.0.3';
 const APP_REPO_OWNER = 'stay206';
@@ -23,6 +23,9 @@ function AppContent() {
 
   // 启动时：优先从 URL 参数加载（分享链接场景），否则从 localStorage 加载
   useEffect(() => {
+    // 先清理掉 localStorage 中已存在的重复仓库配置
+    cleanDuplicateConfigs();
+
     const urlOwner = searchParams.get('owner');
     const urlRepo = searchParams.get('repo');
     const urlToken = searchParams.get('token');
