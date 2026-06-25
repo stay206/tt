@@ -81,8 +81,8 @@ jobs:
         with:
           files: android/app/build/outputs/apk/debug/expense-tracker-v${{ steps.version.outputs.version }}.apk
           body: |
-            ## Update Content
-            - Updated expense tracker app
-            - Latest APK build
+            ## 更新内容
+            - 多人记账本 Android APK 发布
+            - 最新版本构建
           draft: false
           prerelease: false
