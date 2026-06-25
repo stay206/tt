@@ -38,6 +38,14 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
+      - name: Get commit message for release
+        id: commit
+        run: |
+          # 获取当前 tag 对应的 commit message
+          MESSAGE=$(git log -1 --format="%B" | head -20 | sed 's/"/\\"/g' | tr '\n' ' ')
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+          echo "Commit message: $MESSAGE"
+
       - name: Setup Capacitor
         run: npx cap sync android
 
@@ -82,7 +90,7 @@ jobs:
           files: android/app/build/outputs/apk/debug/expense-tracker-v${{ steps.version.outputs.version }}.apk
           body: |
             ## 更新内容
-            - 多人记账本 Android APK 发布
-            - 最新版本构建
+
+            ${{ steps.commit.outputs.message }}
           draft: false
           prerelease: false
