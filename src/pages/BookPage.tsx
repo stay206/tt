@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X, Share2, Copy } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -416,23 +416,12 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
   const mySettlementPlans: { title: string; items: { from: string; to: string; amount: number }[] }[] = [];
   const myRelatedSettlements = settlements.filter(s => s.from === currentUser || s.to === currentUser);
   
-  if (myBalance > 0) {
-    // 当前用户应收钱，每个应付给他的人是一个方案
-    const payers = myRelatedSettlements.filter(s => s.to === currentUser);
-    payers.forEach((s, idx) => {
-      mySettlementPlans.push({
-        title: `方案${idx + 1}`,
-        items: [{ from: s.from, to: currentUser, amount: s.amount }]
-      });
-    });
-  } else if (myBalance < 0) {
-    // 当前用户应付钱，每个应收的人是一个方案
-    const receivers = myRelatedSettlements.filter(s => s.from === currentUser);
-    receivers.forEach((s, idx) => {
-      mySettlementPlans.push({
-        title: `方案${idx + 1}`,
-        items: [{ from: currentUser, to: s.to, amount: s.amount }]
-      });
+  if (myRelatedSettlements.length > 0) {
+    // 只有一个方案：最小转账次数方案
+    // 所有和当前用户相关的结算项都在这个方案里
+    mySettlementPlans.push({
+      title: '方案1（推荐）',
+      items: myRelatedSettlements,
     });
   }
 
