@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
 import { Download, X, RefreshCw } from 'lucide-react';
 import { SetupPage } from '@/pages/SetupPage';
@@ -8,7 +8,7 @@ import { StatisticsPage } from '@/pages/StatisticsPage';
 import { GitHubConfig } from '@/types';
 import { getAllGitHubConfigs, getGitHubConfig, getCurrentConfigId, setCurrentConfigId, getDeviceName, addGitHubConfig, getLatestRelease, compareVersions } from '@/utils/github';
 
-const CURRENT_VERSION = '1.0.2';
+const CURRENT_VERSION = '1.0.3';
 const APP_REPO_OWNER = 'stay206';
 const APP_REPO_NAME = 'tt';
 
@@ -97,6 +97,10 @@ function AppContent() {
   }, []);
 
   const handleConfigChange = () => {
+    setCurrentConfig(null);
+  };
+
+  const handleRefreshConfigs = () => {
     const allConfigs = getAllGitHubConfigs();
     if (allConfigs.length === 0) {
       setCurrentConfig(null);
@@ -138,13 +142,14 @@ function AppContent() {
           path="/"
           element={
             <BooksPage
-              configs={configs}
-              currentConfig={currentConfig}
-              deviceName={deviceName}
-              onConfigChange={handleConfigChange}
-              onSwitchConfig={handleSwitchConfig}
-              onConfigAdded={handleConfigAdded}
-            />
+            configs={configs}
+            currentConfig={currentConfig}
+            deviceName={deviceName}
+            onConfigChange={handleConfigChange}
+            onSwitchConfig={handleSwitchConfig}
+            onConfigAdded={handleConfigAdded}
+            onRefreshConfigs={handleRefreshConfigs}
+          />
           }
         />
         <Route

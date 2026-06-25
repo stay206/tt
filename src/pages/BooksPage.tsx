@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Check, Link, ChevronDown, PlusCircle } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
@@ -11,6 +11,7 @@ interface BooksPageProps {
   onConfigChange: () => void;
   onSwitchConfig: (configId: string) => void;
   onConfigAdded: () => void;
+  onRefreshConfigs: () => void;
 }
 
 const BOOK_ICONS = ['📕', '📗', '📘', '📙', '📓', '📒', '📔', '📚', '💳', '💰', '💵', '💴', '💶', '💷', '🧾', '📋', '📝', '🏦', '💎', '⭐'];
@@ -20,7 +21,7 @@ interface BookWithConfig {
   config: GitHubConfig;
 }
 
-export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, onSwitchConfig, onConfigAdded }: BooksPageProps) => {
+export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, onSwitchConfig, onConfigAdded, onRefreshConfigs }: BooksPageProps) => {
   const navigate = useNavigate();
   const [allBooks, setAllBooks] = useState<BookWithConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -290,7 +291,7 @@ export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, 
                               e.stopPropagation();
                               if (window.confirm(`确定要移除仓库「${config.name}」吗？本地缓存的数据会被清除。`)) {
                                 removeGitHubConfig(config.id);
-                                onConfigChange();
+                                onRefreshConfigs();
                                 setShowConfigMenu(false);
                               }
                             }}
