@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Search, RefreshCw, ArrowLeft, Cloud, BarChart3, Users, UserPlus, Edit2, Trash2, X, Share2, Copy } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
@@ -355,9 +355,13 @@ export const BookPage = ({ config, deviceName }: BookPageProps) => {
     .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth))
     .reduce((sum, r) => sum + r.amount, 0);
 
-  // 本月个人支出（只有付款人显示实际付款金额，参与者不显示支出）
+  // 本月个人支出（付款人显示实际付款金额 + 结算时的支出金额）
   const monthlyPersonalExpense = book.records
-    .filter((r) => r.type === 'expense' && (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth) && r.payer === currentUser)
+    .filter((r) => 
+      r.payer === currentUser &&
+      (selectedMonth === 'all' || getMonthKey(r.date) === selectedMonth) &&
+      (r.type === 'expense' || r.category === '结余')
+    )
     .reduce((sum, r) => sum + r.amount, 0);
 
   // 本月收入（收款部分）
