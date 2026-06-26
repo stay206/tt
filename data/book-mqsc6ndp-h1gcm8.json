@@ -391,24 +391,10 @@
       ],
       "id": "mqrpsyqrsyuhra",
       "createdAt": "2026-06-24T06:51:19.395Z"
-    },
-    {
-      "id": "mqrn4bhkpwkiqs",
-      "type": "expense",
-      "amount": 1,
-      "category": "餐饮",
-      "note": "",
-      "date": "2026-06-24",
-      "createdBy": "卢",
-      "createdAt": "2026-06-24T05:36:10.280Z",
-      "payer": "卢",
-      "participants": [
-        "卢"
-      ]
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-25T14:41:10.320Z",
+  "updatedAt": "2026-06-26T02:46:41.582Z",
   "members": [
     {
       "name": "龙",
