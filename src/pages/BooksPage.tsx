@@ -1,12 +1,10 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Check, Link, ChevronDown, PlusCircle, RefreshCw, Download } from 'lucide-react';
+import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Check, Link, ChevronDown, PlusCircle, RefreshCw } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
-import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData, getAllGitHubConfigs, addGitHubConfig, setCurrentConfigId, testConnection, hashPassword, verifyPassword, removeGitHubConfig, getLatestRelease, compareVersions } from '@/utils/github';
+import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData, getAllGitHubConfigs, addGitHubConfig, setCurrentConfigId, testConnection, hashPassword, verifyPassword, removeGitHubConfig } from '@/utils/github';
 
-const CURRENT_VERSION = '1.0.4';
-const APP_REPO_OWNER = 'stay206';
-const APP_REPO_NAME = 'tt';
+const CURRENT_VERSION = '1.0.5';
 
 interface BooksPageProps {
   configs: GitHubConfig[];
@@ -39,24 +37,6 @@ export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, 
   const [showAddConfig, setShowAddConfig] = useState(false);
   const [newConfig, setNewConfig] = useState({ owner: '', repo: '', token: '', branch: 'main' });
   const [testingConnection, setTestingConnection] = useState(false);
-  const [checkingUpdate, setCheckingUpdate] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<{ version: string; downloadUrl: string } | null>(null);
-
-  const handleCheckUpdate = async () => {
-    setCheckingUpdate(true);
-    setUpdateInfo(null);
-    try {
-      const latest = await getLatestRelease(APP_REPO_OWNER, APP_REPO_NAME);
-      if (latest && compareVersions(CURRENT_VERSION, latest.version)) {
-        setUpdateInfo(latest);
-      } else {
-        alert('当前已是最新版本！');
-      }
-    } catch {
-      alert('检查更新失败，请稍后再试');
-    }
-    setCheckingUpdate(false);
-  };
 
   const loadAllBooks = async () => {
     setLoading(true);
@@ -503,30 +483,9 @@ export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, 
 
       {/* 底部版本信息 */}
       <footer className="py-4 text-center border-t border-gray-100 bg-white/50">
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="text-xs text-gray-400">
             多人记账本 v{CURRENT_VERSION}
-          </div>
-          <div className="flex items-center gap-2">
-            {updateInfo && (
-              <a
-                href={updateInfo.downloadUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-sm font-medium"
-              >
-                <Download className="w-3.5 h-3.5" />
-                下载 v{updateInfo.version}
-              </a>
-            )}
-            <button
-              onClick={handleCheckUpdate}
-              disabled={checkingUpdate}
-              className="flex items-center gap-1 px-3 py-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg text-xs transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${checkingUpdate ? 'animate-spin' : ''}`} />
-              {checkingUpdate ? '检查中...' : '检查更新'}
-            </button>
           </div>
         </div>
       </footer>
