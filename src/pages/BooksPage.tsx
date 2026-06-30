@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Check, Link, ChevronDown, PlusCircle, RefreshCw, Download } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
@@ -61,24 +61,41 @@ export const BooksPage = ({ configs, currentConfig, deviceName, onConfigChange, 
   const loadAllBooks = async () => {
     setLoading(true);
     setError('');
+    setAllBooks([]);
     try {
       const allConfigs = getAllGitHubConfigs();
+      console.log('加载配置:', allConfigs);
+      
+      if (allConfigs.length === 0) {
+        console.log('没有配置，跳过加载');
+        setLoading(false);
+        return;
+      }
+      
       const books: BookWithConfig[] = [];
+      const failedConfigs: string[] = [];
       
       for (const config of allConfigs) {
         try {
+          console.log(`正在加载仓库: ${config.owner}/${config.repo}, branch: ${config.branch || 'main'}`);
           const idx = await getBookIndex(config);
+          console.log(`仓库 ${config.owner}/${config.repo} 的账本数量:`, idx.books.length);
           idx.books.forEach(book => {
             books.push({ book, config });
           });
-        } catch (e) {
-          // 跳过加载失败的仓库
+        } catch (e: any) {
+          console.error(`加载仓库 ${config.owner}/${config.repo} 失败:`, e);
+          failedConfigs.push(`${config.owner}/${config.repo}`);
         }
       }
       
       // 按更新时间排序
       books.sort((a, b) => new Date(b.book.updatedAt).getTime() - new Date(a.book.updatedAt).getTime());
       setAllBooks(books);
+      
+      if (failedConfigs.length > 0) {
+        setError(`以下仓库加载失败：${failedConfigs.join('、')}。请检查网络连接或仓库配置。`);
+      }
     } catch (e: any) {
       setError(e.message || '加载账本列表失败');
     }
