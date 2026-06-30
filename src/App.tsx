@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
 import { Download, X, RefreshCw } from 'lucide-react';
 import { SetupPage } from '@/pages/SetupPage';
@@ -8,7 +8,7 @@ import { StatisticsPage } from '@/pages/StatisticsPage';
 import { GitHubConfig } from '@/types';
 import { getAllGitHubConfigs, getGitHubConfig, getCurrentConfigId, setCurrentConfigId, getDeviceName, addGitHubConfig, getLatestRelease, compareVersions, cleanDuplicateConfigs } from '@/utils/github';
 
-const CURRENT_VERSION = '1.0.4';
+const CURRENT_VERSION = '1.0.5';
 const APP_REPO_OWNER = 'stay206';
 const APP_REPO_NAME = 'tt';
 

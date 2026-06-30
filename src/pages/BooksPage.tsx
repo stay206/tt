@@ -1,10 +1,10 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Cloud, Trash2, Settings, Github, X, Edit, Check, Link, ChevronDown, PlusCircle, RefreshCw, Download } from 'lucide-react';
 import { Book, BookIndex, GitHubConfig } from '@/types';
 import { getBookIndex, getBook, saveBook, deleteBookFile, resetAllData, getAllGitHubConfigs, addGitHubConfig, setCurrentConfigId, testConnection, hashPassword, verifyPassword, removeGitHubConfig, getLatestRelease, compareVersions } from '@/utils/github';
 
-const CURRENT_VERSION = '1.0.4';
+const CURRENT_VERSION = '1.0.5';
 const APP_REPO_OWNER = 'stay206';
 const APP_REPO_NAME = 'tt';
 
