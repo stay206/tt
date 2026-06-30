@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
 import { Download, X, RefreshCw } from 'lucide-react';
 import { SetupPage } from '@/pages/SetupPage';
