@@ -5,6 +5,21 @@
   "icon": "📕",
   "records": [
     {
+      "id": "mr20bmy03yahoz",
+      "type": "income",
+      "amount": 700,
+      "category": "结余",
+      "note": "宏 结算给 龙",
+      "date": "2026-07-01",
+      "createdAt": "2026-07-01T11:43:28.488Z",
+      "createdBy": "宏",
+      "payer": "宏",
+      "participants": [
+        "龙",
+        "宏"
+      ]
+    },
+    {
       "id": "mr0rciw9xn44sq",
       "type": "expense",
       "amount": 33.89,
@@ -502,7 +517,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-06-30T17:10:31.478Z",
+  "updatedAt": "2026-07-01T11:43:28.488Z",
   "members": [
     {
       "name": "龙",
