@@ -5,21 +5,6 @@
   "icon": "📕",
   "records": [
     {
-      "id": "mr22ll5jqw5bgf",
-      "type": "income",
-      "amount": 73.5,
-      "category": "结余",
-      "note": "卢 结算给 双",
-      "date": "2026-07-01",
-      "createdAt": "2026-07-01T12:47:11.959Z",
-      "createdBy": "卢",
-      "payer": "卢",
-      "participants": [
-        "双",
-        "卢"
-      ]
-    },
-    {
       "id": "mr20bmy03yahoz",
       "type": "income",
       "amount": 700,
@@ -532,7 +517,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-07-01T12:47:11.969Z",
+  "updatedAt": "2026-07-02T01:09:27.256Z",
   "members": [
     {
       "name": "龙",
