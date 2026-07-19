@@ -5,6 +5,182 @@
   "icon": "📕",
   "records": [
     {
+      "id": "mrronvjvj7u8mb",
+      "type": "expense",
+      "amount": 2.6,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-10",
+      "createdAt": "2026-07-19T10:59:04.699Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "龙"
+      ]
+    },
+    {
+      "id": "mrronlbq7wcdkw",
+      "type": "expense",
+      "amount": 37.33,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-10",
+      "createdAt": "2026-07-19T10:58:51.446Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢"
+      ]
+    },
+    {
+      "id": "mrrolbynbqriwg",
+      "type": "expense",
+      "amount": 82.9,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-18",
+      "createdAt": "2026-07-19T10:57:05.999Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
+      "id": "mrrokp3q5kdkpg",
+      "type": "expense",
+      "amount": 6.5,
+      "category": "购物",
+      "note": "",
+      "date": "2026-07-18",
+      "createdAt": "2026-07-19T10:56:36.374Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "卢"
+      ]
+    },
+    {
+      "id": "mrrok7jvvpdtzf",
+      "type": "expense",
+      "amount": 111.58,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-14",
+      "createdAt": "2026-07-19T10:56:13.627Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢"
+      ]
+    },
+    {
+      "id": "mrroja3eosf3tw",
+      "type": "expense",
+      "amount": 2.5,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-10",
+      "createdAt": "2026-07-19T10:55:30.266Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "龙"
+      ]
+    },
+    {
+      "id": "mrroi8wf1zl4zp",
+      "type": "expense",
+      "amount": 20.39,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-14",
+      "createdAt": "2026-07-19T10:54:42.063Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
+      "id": "mrrofal2hk04lc",
+      "type": "expense",
+      "amount": 104.96,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-10",
+      "createdAt": "2026-07-19T10:52:24.278Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "卢",
+        "宏",
+        "龙"
+      ]
+    },
+    {
+      "id": "mrroeffkrz9g2p",
+      "type": "expense",
+      "amount": 77.21,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-09",
+      "createdAt": "2026-07-19T10:51:43.904Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
+      "id": "mrrodvf3uoi1kg",
+      "type": "expense",
+      "amount": 31.64,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-08",
+      "createdAt": "2026-07-19T10:51:17.967Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "宏",
+        "卢",
+        "龙"
+      ]
+    },
+    {
+      "id": "mrrod52dagz2vm",
+      "type": "expense",
+      "amount": 57.91,
+      "category": "餐饮",
+      "note": "",
+      "date": "2026-07-07",
+      "createdAt": "2026-07-19T10:50:43.813Z",
+      "createdBy": "双",
+      "payer": "双",
+      "participants": [
+        "双",
+        "卢",
+        "龙",
+        "宏"
+      ]
+    },
+    {
       "id": "mreuvosz7qb0jj",
       "type": "expense",
       "amount": 10,
@@ -670,7 +846,7 @@
     }
   ],
   "createdAt": "2026-06-23T15:47:02.531Z",
-  "updatedAt": "2026-07-10T11:32:06.613Z",
+  "updatedAt": "2026-07-19T10:59:26.226Z",
   "members": [
     {
       "name": "龙",
